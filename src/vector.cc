@@ -2,19 +2,17 @@
 #include <vector>
 using namespace std;
 
-void print(vector<int> coll)
-{
-  for (unsigned i=0; i<coll.size(); ++i) {
+void print(vector<int> coll) {
+  for (unsigned i = 0; i < coll.size(); ++i) {
     cout << coll[i] << ' ';
   }
   cout << endl;
 }
 
-int main()
-{
+int main() {
   vector<int> coll; // interger vector container
 
-  for (int i=0; i<6; ++i) {
+  for (int i = 0; i < 6; ++i) {
     coll.push_back(i);
   }
 
