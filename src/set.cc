@@ -22,5 +22,6 @@ int main() {
   myset.erase(15);
   print_container("erase(15):", myset);
 
-  std::cout << "count(15): " << myset.count(15) << ", count(12): " << myset.count(12) << std::endl;
+  std::cout << "count(15): " << myset.count(15)
+            << ", count(12): " << myset.count(12) << std::endl;
 }
