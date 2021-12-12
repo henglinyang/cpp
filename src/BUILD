@@ -1,4 +1,9 @@
 cc_binary(
+  name = "unordered_set",
+  srcs = ["unordered_set.cc", "container_printer.h"],
+)
+
+cc_binary(
   name = "set",
   srcs = ["set.cc", "container_printer.h"],
 )
