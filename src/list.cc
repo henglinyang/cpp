@@ -4,20 +4,20 @@
 
 #include "container_printer.h"
 
-int main()
-{
+int main() {
   struct less_a {
-    bool operator() (const char& value) { return value < 'a'; }
+    bool operator()(const char &value) { return value < 'a'; }
   };
 
-  std::list<char> coll;  // list container for chars
+  std::list<char> coll; // list container for chars
   std::list<char> coll2;
 
   coll.push_back('a');
   coll.push_back('b');
   coll.push_back('c');
   print_container<std::list<char>>("coll", coll);
-  std::cout << "coll, front: " << coll.front() << ", back: " << coll.back() << std::endl;
+  std::cout << "coll, front: " << coll.front() << ", back: " << coll.back()
+            << std::endl;
 
   coll.push_front('z');
   coll.push_front('y');
@@ -32,7 +32,7 @@ int main()
   coll.remove('z');
   print_container<std::list<char>>("remove('z'), coll", coll);
 
-  for (char c='1'; c<'4'; ++c)
+  for (char c = '1'; c < '4'; ++c)
     coll2.push_back(c);
   print_container<std::list<char>>("coll2", coll2);
   // begin and end of coll2 are optional
@@ -50,6 +50,6 @@ int main()
   coll.swap(coll2);
   print_container<std::list<char>>("swap, coll", coll);
   print_container<std::list<char>>("swap, coll2", coll2);
-  
+
   return 0;
 }
