@@ -1,9 +1,9 @@
-#include <unordered_map>
+#include <map>
 
 #include "container_printer.h"
 
 int main() {
-  std::unordered_map<std::string, int> mymap;
+  std::map<std::string, int> mymap;
 
   mymap["two"] = 2;
   mymap["fifteen"] = 15;
