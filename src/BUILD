@@ -1,4 +1,9 @@
 cc_binary(
+  name = "multiset",
+  srcs = ["multiset.cc"],
+)
+
+cc_binary(
   name = "unordered_map",
   srcs = ["unordered_map.cc", "container_printer.h"],
 )
