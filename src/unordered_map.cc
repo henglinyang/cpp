@@ -5,6 +5,7 @@
 int main() {
   std::unordered_map<std::string, int> mymap;
 
+  mymap.insert({"zero", 0});
   mymap["two"] = 2;
   mymap["fifteen"] = 15;
   mymap["one"] = 1;
