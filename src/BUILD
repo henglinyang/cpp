@@ -29,6 +29,11 @@ cc_binary(
 )
 
 cc_binary(
+  name = "forward_list",
+  srcs = ["forward_list.cc"],
+)
+
+cc_binary(
   name = "list",
   srcs = ["list.cc", "container_printer.h"],
 )
