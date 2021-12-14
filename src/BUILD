@@ -1,4 +1,9 @@
 cc_binary(
+  name = "stack",
+  srcs = ["stack.cc"],
+)
+
+cc_binary(
   name = "array",
   srcs = ["array.cc"],
 )
