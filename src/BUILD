@@ -1,4 +1,9 @@
 cc_binary(
+  name = "array",
+  srcs = ["array.cc"],
+)
+
+cc_binary(
   name = "unordered_multimap",
   srcs = ["unordered_multimap.cc"],
 )
