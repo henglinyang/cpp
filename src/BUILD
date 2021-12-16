@@ -1,4 +1,9 @@
 cc_binary(
+  name = "string",
+  srcs = ["string.cc", "container_printer.h"],
+)
+
+cc_binary(
   name = "heap",
   srcs = ["heap.cc", "container_printer.h"],
 )
