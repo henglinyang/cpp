@@ -187,7 +187,7 @@ int EncodeActivityFile()
 	}
 	catch (...)
 	{
-		throw std::exception("Exception encoding activity file");
+		throw std::runtime_error("Exception encoding activity file");
 	}
 }
 int EncodeSettingsFile()
@@ -234,7 +234,7 @@ int EncodeSettingsFile()
 	}
 	catch (...)
 	{
-		throw std::exception("Exception encoding settings file.");
+		throw std::runtime_error("Exception encoding settings file.");
 	}
 }
 
@@ -311,7 +311,7 @@ int EncodeMonitoringFile()
 	}
 	catch (...)
 	{
-		throw std::exception("Exception encoding monitoring file.");
+		throw std::runtime_error("Exception encoding monitoring file.");
 	}
 }
 
@@ -327,7 +327,7 @@ int main()
 		returnValue += EncodeMonitoringFile();
 		returnValue += EncodeActivityFile();
 	}
-	catch (const std::exception &e)
+	catch (const std::runtime_error &e)
 	{
 		printf("Exception occurred while encoding example files: %s", e.what());
 		return -1;
