@@ -31,6 +31,9 @@
 *.out
 *.app
 
+# Vim tmp files
+*.sw[a-z]
+
 # Bazel generated files
 /bazel-bin
 /bazel-cpp
