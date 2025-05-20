@@ -163,13 +163,13 @@ public:
       case FIT_ACTIVITY_TYPE_SWIMMING: // Intentional fallthrough
          if( mesg.IsStrokesValid() )
          {
-            printf(   "Strokes: %d\n", mesg.GetStrokes());
+            printf(   "Strokes: %d\n", static_cast<int>(mesg.GetStrokes()));
          }
          break;
       default:
          if(mesg.IsCyclesValid() )
          {
-            printf(   "Cycles: %d\n", mesg.GetCycles());
+            printf(   "Cycles: %d\n", static_cast<int>(mesg.GetCycles()));
          }
          break;
       }
@@ -300,16 +300,16 @@ int main(int argc, char* argv[])
       printf("FIT file integrity failed.\nAttempting to decode...\n");
    }
 
-   mesgBroadcaster.AddListener((fit::FileIdMesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::UserProfileMesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::MonitoringMesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::DeviceInfoMesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::RecordMesgListener&)listener);
-   mesgBroadcaster.AddListener((fit::MesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::WorkoutMesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::WorkoutSessionMesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::WorkoutStepMesgListener &)listener);
-   mesgBroadcaster.AddListener((fit::FileCreatorMesgListener &)listener);
+   mesgBroadcaster.AddListener(static_cast<fit::FileIdMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::UserProfileMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::MonitoringMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::DeviceInfoMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::RecordMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::MesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::WorkoutMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::WorkoutSessionMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::WorkoutStepMesgListener &>(listener));
+   mesgBroadcaster.AddListener(static_cast<fit::FileCreatorMesgListener &>(listener));
 
    try
    {
