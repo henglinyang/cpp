@@ -1,0 +1,9 @@
+load("@rules_cc//cc:defs.bzl", "cc_library")
+
+cc_library(
+    name = "libxml2",
+    hdrs = glob(["**/*.h"]),
+    # includes = ["/usr/include/libxml2"], # ln -s /usr/include/libxml2/libxml .
+    linkopts = ["-lxml2"],  # Linker flag for libxml2
+    visibility = ["//visibility:public"],
+)

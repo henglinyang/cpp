@@ -1,3 +1,5 @@
+load("@rules_cc//cc:defs.bzl", "cc_binary")
+
 cc_binary(
   name = "strrchr",
   srcs = ["strrchr.cc", "container_printer.h"],
@@ -76,4 +78,10 @@ cc_binary(
 cc_binary(
   name = "vector",
   srcs = ["vector.cc"],
+)
+
+cc_binary(
+    name = "parse_xml",
+    srcs = ["parse_xml.c"],
+    deps = ["@libxml2//:libxml2"],
 )
