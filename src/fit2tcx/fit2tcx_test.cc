@@ -283,6 +283,202 @@ TEST(WriteTcx, MultiLapCount) {
     EXPECT_EQ(countChildren(activity, "Lap"), 3);
 }
 
+// ---- writeWorkoutTcx helpers ----
+
+static std::string runWriteWorkoutTcx(const WorkoutData& workout) {
+    std::ostringstream out;
+    writeWorkoutTcx(workout, out);
+    return out.str();
+}
+
+static WorkoutStepData makeStep(uint8_t dur_type, uint32_t dur_val,
+                                uint8_t tgt_type, uint8_t intensity) {
+    WorkoutStepData s;
+    s.duration_type  = dur_type;
+    s.duration_value = dur_val;
+    s.target_type    = tgt_type;
+    s.intensity      = intensity;
+    return s;
+}
+
+// ---- writeWorkoutTcx: document structure ----
+
+TEST(WriteWorkoutTcx, RootNamespace) {
+    auto doc = parseTcx(runWriteWorkoutTcx(WorkoutData{}));
+    auto root = doc.child("TrainingCenterDatabase");
+    EXPECT_TRUE(root);
+    EXPECT_STREQ(root.attribute("xmlns").value(),
+        "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2");
+}
+TEST(WriteWorkoutTcx, HasWorkoutsNode) {
+    auto doc = parseTcx(runWriteWorkoutTcx(WorkoutData{}));
+    auto root = doc.child("TrainingCenterDatabase");
+    EXPECT_TRUE(root.child("Workouts").child("Workout"));
+    EXPECT_FALSE(root.child("Activities"));
+}
+TEST(WriteWorkoutTcx, DefaultSportOther) {
+    auto doc = parseTcx(runWriteWorkoutTcx(WorkoutData{}));
+    auto wkt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout");
+    EXPECT_STREQ(wkt.attribute("Sport").value(), "Other");
+}
+TEST(WriteWorkoutTcx, SportFromWorkout) {
+    WorkoutData w; w.has_sport = true; w.sport = FIT_SPORT_RUNNING;
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto wkt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout");
+    EXPECT_STREQ(wkt.attribute("Sport").value(), "Running");
+}
+TEST(WriteWorkoutTcx, WorkoutNamePresent) {
+    WorkoutData w; w.has_name = true; w.name = "MAF";
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto wkt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout");
+    EXPECT_STREQ(wkt.child("Name").text().as_string(), "MAF");
+}
+TEST(WriteWorkoutTcx, WorkoutNameAbsentWhenMissing) {
+    auto doc = parseTcx(runWriteWorkoutTcx(WorkoutData{}));
+    auto wkt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout");
+    EXPECT_FALSE(wkt.child("Name"));
+}
+
+// ---- writeWorkoutTcx: step structure ----
+
+TEST(WriteWorkoutTcx, StepCount) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_TIME, 60000, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_TIME, 60000, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_TIME, 60000, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto wkt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout");
+    EXPECT_EQ(countChildren(wkt, "Step"), 3);
+}
+TEST(WriteWorkoutTcx, StepIdOneBased) {
+    WorkoutData w;
+    WorkoutStepData s; s.step_index = 0;
+    s.duration_type = FIT_WKT_STEP_DURATION_OPEN;
+    s.target_type   = FIT_WKT_STEP_TARGET_OPEN;
+    w.steps.push_back(s);
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_EQ(step.child("StepId").text().as_int(), 1);
+}
+TEST(WriteWorkoutTcx, StepTypeAttribute) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_STREQ(step.attribute("xsi:type").value(), "Step_t");
+}
+TEST(WriteWorkoutTcx, StepNamePresent) {
+    WorkoutData w;
+    WorkoutStepData s = makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE);
+    s.has_name = true; s.name = "Warmup";
+    w.steps.push_back(s);
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_STREQ(step.child("Name").text().as_string(), "Warmup");
+}
+TEST(WriteWorkoutTcx, StepNameAbsentWhenMissing) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_FALSE(step.child("Name"));
+}
+
+// ---- writeWorkoutTcx: duration ----
+
+TEST(WriteWorkoutTcx, DurationTime) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_TIME, 180000, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto dur = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
+                  .child("Step").child("Duration");
+    EXPECT_STREQ(dur.attribute("xsi:type").value(), "Time_t");
+    EXPECT_EQ(dur.child("Seconds").text().as_int(), 180);
+}
+TEST(WriteWorkoutTcx, DurationDistance) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_DISTANCE, 100000, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto dur = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
+                  .child("Step").child("Duration");
+    EXPECT_STREQ(dur.attribute("xsi:type").value(), "Distance_t");
+    EXPECT_EQ(dur.child("Meters").text().as_int(), 1000);
+}
+TEST(WriteWorkoutTcx, DurationOpen) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto dur = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
+                  .child("Step").child("Duration");
+    EXPECT_STREQ(dur.attribute("xsi:type").value(), "UserInitiated_t");
+}
+
+// ---- writeWorkoutTcx: intensity ----
+
+TEST(WriteWorkoutTcx, IntensityActive) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Active");
+}
+TEST(WriteWorkoutTcx, IntensityWarmup) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_WARMUP));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Warmup");
+}
+TEST(WriteWorkoutTcx, IntensityCooldown) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_COOLDOWN));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Cooldown");
+}
+TEST(WriteWorkoutTcx, IntensityRest) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_REST));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
+    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Resting");
+}
+
+// ---- writeWorkoutTcx: target ----
+
+TEST(WriteWorkoutTcx, TargetOpen) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto tgt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
+                  .child("Step").child("Target");
+    EXPECT_STREQ(tgt.attribute("xsi:type").value(), "Open_t");
+}
+TEST(WriteWorkoutTcx, TargetHeartRate) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_HEART_RATE, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto tgt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
+                  .child("Step").child("Target");
+    EXPECT_STREQ(tgt.attribute("xsi:type").value(), "HeartRate_t");
+}
+TEST(WriteWorkoutTcx, TargetCadence) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_CADENCE, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto tgt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
+                  .child("Step").child("Target");
+    EXPECT_STREQ(tgt.attribute("xsi:type").value(), "Cadence_t");
+}
+TEST(WriteWorkoutTcx, TargetSpeed) {
+    WorkoutData w;
+    w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_SPEED, FIT_INTENSITY_ACTIVE));
+    auto doc = parseTcx(runWriteWorkoutTcx(w));
+    auto tgt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
+                  .child("Step").child("Target");
+    EXPECT_STREQ(tgt.attribute("xsi:type").value(), "Speed_t");
+}
+
 // ---- main ----
 
 int main() {
