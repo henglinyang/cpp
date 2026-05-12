@@ -27,11 +27,32 @@ struct SessionData {
     bool has_start_time = false, has_sport = false;
 };
 
+struct WorkoutStepData {
+    uint16_t step_index = 0;
+    uint8_t duration_type = 0;
+    uint32_t duration_value = 0;
+    uint8_t target_type = 2; // Open
+    uint32_t target_value = 0;
+    uint8_t intensity = 0;
+    std::string name;
+    bool has_name = false;
+};
+
+struct WorkoutData {
+    std::string name;
+    bool has_name = false;
+    uint8_t sport = 0;
+    bool has_sport = false;
+    std::vector<WorkoutStepData> steps;
+};
+
 struct FitData {
     std::vector<RecordData> records;
     std::vector<LapData> laps;
     SessionData session;
     bool has_session = false;
+    WorkoutData workout;
+    bool has_workout = false;
 };
 
 std::string fitToIso8601(uint32_t ts);
@@ -43,6 +64,8 @@ void writeTcx(const std::vector<RecordData>& records,
               const SessionData& session,
               bool has_session,
               std::ostream& out);
+
+void writeWorkoutTcx(const WorkoutData& workout, std::ostream& out);
 
 // Decodes a FIT binary stream. Throws std::runtime_error on fatal decode failure.
 FitData decodeFit(std::istream& file);

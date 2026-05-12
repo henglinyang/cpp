@@ -9,6 +9,10 @@
 #include "fit_lap_mesg_listener.hpp"
 #include "fit_session_mesg.hpp"
 #include "fit_session_mesg_listener.hpp"
+#include "fit_workout_mesg.hpp"
+#include "fit_workout_mesg_listener.hpp"
+#include "fit_workout_step_mesg.hpp"
+#include "fit_workout_step_mesg_listener.hpp"
 #include "fit_profile.hpp"
 #include "pugixml.hpp"
 
@@ -45,12 +49,23 @@ const char* sportToTcx(uint8_t sport) {
     }
 }
 
+// ---- helpers ----
+
+static std::string wstringToString(const FIT_WSTRING& ws) {
+    std::string s;
+    s.reserve(ws.size());
+    for (wchar_t c : ws) s += static_cast<char>(c);
+    return s;
+}
+
 // ---- FIT listener ----
 
 class Listener
     : public fit::RecordMesgListener
     , public fit::LapMesgListener
     , public fit::SessionMesgListener
+    , public fit::WorkoutMesgListener
+    , public fit::WorkoutStepMesgListener
     , public fit::DeveloperFieldDescriptionListener
 {
 public:
@@ -117,6 +132,24 @@ public:
         data.has_session = true;
         if (mesg.IsStartTimeValid()) { data.session.has_start_time = true; data.session.start_time = mesg.GetStartTime(); }
         if (mesg.IsSportValid())     { data.session.has_sport      = true; data.session.sport      = mesg.GetSport(); }
+    }
+
+    void OnMesg(fit::WorkoutMesg& mesg) override {
+        data.has_workout = true;
+        if (mesg.IsSportValid())   { data.workout.has_sport = true; data.workout.sport = mesg.GetSport(); }
+        if (mesg.IsWktNameValid()) { data.workout.has_name  = true; data.workout.name  = wstringToString(mesg.GetWktName()); }
+    }
+
+    void OnMesg(fit::WorkoutStepMesg& mesg) override {
+        WorkoutStepData s;
+        if (mesg.IsMessageIndexValid()) s.step_index     = mesg.GetMessageIndex();
+        if (mesg.IsDurationTypeValid()) s.duration_type  = mesg.GetDurationType();
+        if (mesg.IsDurationValueValid()) s.duration_value = mesg.GetDurationValue();
+        if (mesg.IsTargetTypeValid())   s.target_type    = mesg.GetTargetType();
+        if (mesg.IsTargetValueValid())  s.target_value   = mesg.GetTargetValue();
+        if (mesg.IsIntensityValid())    s.intensity      = mesg.GetIntensity();
+        if (mesg.IsWktStepNameValid()) { s.has_name = true; s.name = wstringToString(mesg.GetWktStepName()); }
+        data.workout.steps.push_back(s);
     }
 
     void OnDeveloperFieldDescription(const fit::DeveloperFieldDescription&) override {}
@@ -222,6 +255,90 @@ void writeTcx(const std::vector<RecordData>& records,
     doc.save(out, "  ");
 }
 
+static const char* intensityToTcx(uint8_t intensity) {
+    switch (intensity) {
+        case FIT_INTENSITY_WARMUP:   return "Warmup";
+        case FIT_INTENSITY_REST:     return "Resting";
+        case FIT_INTENSITY_COOLDOWN: return "Cooldown";
+        default:                     return "Active";
+    }
+}
+
+void writeWorkoutTcx(const WorkoutData& workout, std::ostream& out) {
+    pugi::xml_document doc;
+
+    auto decl = doc.prepend_child(pugi::node_declaration);
+    decl.append_attribute("version")  = "1.0";
+    decl.append_attribute("encoding") = "UTF-8";
+
+    auto root = doc.append_child("TrainingCenterDatabase");
+    root.append_attribute("xmlns") =
+        "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2";
+    root.append_attribute("xmlns:xsi") =
+        "http://www.w3.org/2001/XMLSchema-instance";
+    root.append_attribute("xsi:schemaLocation") =
+        "http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 "
+        "http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd";
+
+    auto wktNode = root.append_child("Workouts").append_child("Workout");
+    wktNode.append_attribute("Sport") =
+        (workout.has_sport) ? sportToTcx(workout.sport) : "Other";
+
+    if (workout.has_name)
+        wktNode.append_child("Name").text().set(workout.name.c_str());
+
+    for (const auto& step : workout.steps) {
+        auto stepNode = wktNode.append_child("Step");
+        stepNode.append_attribute("xsi:type") = "Step_t";
+
+        stepNode.append_child("StepId").text().set(
+            static_cast<int>(step.step_index) + 1);
+
+        if (step.has_name && !step.name.empty())
+            stepNode.append_child("Name").text().set(step.name.c_str());
+
+        // Duration
+        if (step.duration_type == FIT_WKT_STEP_DURATION_TIME) {
+            auto dur = stepNode.append_child("Duration");
+            dur.append_attribute("xsi:type") = "Time_t";
+            dur.append_child("Seconds").text().set(
+                static_cast<int>(step.duration_value / 1000));
+        } else if (step.duration_type == FIT_WKT_STEP_DURATION_DISTANCE) {
+            auto dur = stepNode.append_child("Duration");
+            dur.append_attribute("xsi:type") = "Distance_t";
+            dur.append_child("Meters").text().set(
+                static_cast<int>(step.duration_value / 100));
+        } else {
+            // OPEN or anything else — user-initiated
+            auto dur = stepNode.append_child("Duration");
+            dur.append_attribute("xsi:type") = "UserInitiated_t";
+        }
+
+        stepNode.append_child("Intensity").text().set(
+            intensityToTcx(step.intensity));
+
+        // Target
+        if (step.target_type == FIT_WKT_STEP_TARGET_HEART_RATE) {
+            auto tgt = stepNode.append_child("Target");
+            tgt.append_attribute("xsi:type") = "HeartRate_t";
+        } else if (step.target_type == FIT_WKT_STEP_TARGET_CADENCE) {
+            auto tgt = stepNode.append_child("Target");
+            tgt.append_attribute("xsi:type") = "Cadence_t";
+        } else if (step.target_type == FIT_WKT_STEP_TARGET_SPEED) {
+            auto tgt = stepNode.append_child("Target");
+            tgt.append_attribute("xsi:type") = "Speed_t";
+        } else if (step.target_type == FIT_WKT_STEP_TARGET_POWER) {
+            auto tgt = stepNode.append_child("Target");
+            tgt.append_attribute("xsi:type") = "Power_t";
+        } else {
+            auto tgt = stepNode.append_child("Target");
+            tgt.append_attribute("xsi:type") = "Open_t";
+        }
+    }
+
+    doc.save(out, "  ");
+}
+
 // ---- FIT decoder ----
 
 FitData decodeFit(std::istream& file) {
@@ -235,6 +352,8 @@ FitData decodeFit(std::istream& file) {
     broadcaster.AddListener(static_cast<fit::RecordMesgListener&>(listener));
     broadcaster.AddListener(static_cast<fit::LapMesgListener&>(listener));
     broadcaster.AddListener(static_cast<fit::SessionMesgListener&>(listener));
+    broadcaster.AddListener(static_cast<fit::WorkoutMesgListener&>(listener));
+    broadcaster.AddListener(static_cast<fit::WorkoutStepMesgListener&>(listener));
 
     try {
         decode.Read(&file, &broadcaster, &broadcaster, &listener);

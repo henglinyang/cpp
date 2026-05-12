@@ -64,15 +64,22 @@ int main(int argc, char* argv[]) {
     try {
         FitData data = decodeFit(inFile);
 
+        auto doWrite = [&](std::ostream& out) {
+            if (data.has_workout && !data.has_session && data.records.empty())
+                writeWorkoutTcx(data.workout, out);
+            else
+                writeTcx(data.records, data.laps, data.session, data.has_session, out);
+        };
+
         if (outputPath) {
             std::ofstream outFile(outputPath);
             if (!outFile.is_open()) {
                 fprintf(stderr, "error: cannot open output file '%s'\n", outputPath);
                 return 1;
             }
-            writeTcx(data.records, data.laps, data.session, data.has_session, outFile);
+            doWrite(outFile);
         } else {
-            writeTcx(data.records, data.laps, data.session, data.has_session, std::cout);
+            doWrite(std::cout);
         }
     } catch (const std::exception& e) {
         fprintf(stderr, "%s\n", e.what());
