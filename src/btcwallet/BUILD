@@ -6,6 +6,7 @@ cc_library(
     hdrs = ["keygen.h", "crypto.h"],
     copts = ["-std=c++20"],
     deps = ["//third_party/secp256k1:secp256k1"],
+    visibility = ["//visibility:public"],
 )
 
 cc_binary(
