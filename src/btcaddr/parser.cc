@@ -201,6 +201,10 @@ ScanStats scan_block_file(const std::string& path,
                 ++stats.transactions;
             }
             ++stats.blocks;
+            if (opts.flush_threshold > 0 &&
+                addresses.size() >= opts.flush_threshold &&
+                opts.on_flush)
+                opts.on_flush(addresses);
         } catch (const std::exception& e) {
             fprintf(stderr, "  warning: parse error in %s at +%zu: %s\n",
                     path.c_str(), pos, e.what());

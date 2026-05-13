@@ -530,6 +530,89 @@ TEST(Network, TestnetP2WPKH) {
     EXPECT_NOT_IN(addrs, P2WPKH_ADDR);  // mainnet form absent
 }
 
+// ---- Flush / memory-limit tests ----
+
+TEST(Flush, CallbackFiredAtThreshold) {
+    // threshold=1: on_flush must be called after the very first block.
+    int flush_calls = 0;
+    btcaddr::ScanOptions opts;
+    opts.flush_threshold = 1;
+    opts.on_flush = [&](std::unordered_set<std::string>& set) {
+        ++flush_calls;
+        set.clear();
+    };
+
+    // 3 blocks, each with one distinct address
+    auto tx1 = make_tx({{0, P2PKH_SCRIPT}});
+    auto tx2 = make_tx({{0, P2SH_SCRIPT}});
+    auto tx3 = make_tx({{0, P2WPKH_SCRIPT}});
+    auto file = make_blkfile({make_block({tx1}), make_block({tx2}), make_block({tx3})});
+
+    std::unordered_set<std::string> addrs;
+    auto s = scan(file, addrs, opts);
+
+    EXPECT_EQ(s.blocks, uint64_t(3));
+    EXPECT_TRUE(flush_calls >= 1);
+}
+
+TEST(Flush, AllAddressesDeliveredToCallback) {
+    // Collect every address the callback receives; verify all five types are seen.
+    std::unordered_set<std::string> flushed;
+    btcaddr::ScanOptions opts;
+    opts.flush_threshold = 1;   // flush after every block
+    opts.on_flush = [&](std::unordered_set<std::string>& set) {
+        flushed.insert(set.begin(), set.end());
+        set.clear();
+    };
+
+    auto file = make_blkfile({make_block({make_tx({
+        {0, P2PKH_SCRIPT},
+        {0, P2SH_SCRIPT},
+        {0, P2WPKH_SCRIPT},
+        {0, p2wsh_script()},
+        {0, p2tr_script()},
+    })})});
+
+    std::unordered_set<std::string> addrs;  // will be empty after flush
+    scan(file, addrs, opts);
+
+    EXPECT_IN(flushed, P2PKH_ADDR);
+    EXPECT_IN(flushed, P2SH_ADDR);
+    EXPECT_IN(flushed, P2WPKH_ADDR);
+    EXPECT_IN(flushed, P2WSH_ADDR);
+    EXPECT_IN(flushed, P2TR_ADDR);
+}
+
+TEST(Flush, ThresholdDisabledByDefault) {
+    // Default ScanOptions must not call on_flush.
+    bool called = false;
+    btcaddr::ScanOptions opts;
+    opts.on_flush = [&](std::unordered_set<std::string>&) { called = true; };
+    // flush_threshold defaults to 0, so on_flush must never fire.
+
+    auto file = make_blkfile({make_block({make_tx({{0, P2PKH_SCRIPT}})})});
+    std::unordered_set<std::string> addrs;
+    scan(file, addrs, opts);
+
+    EXPECT_FALSE(called);
+    EXPECT_IN(addrs, P2PKH_ADDR);
+}
+
+TEST(Flush, HighThresholdNotTriggered) {
+    // threshold larger than number of addresses → no flush.
+    bool called = false;
+    btcaddr::ScanOptions opts;
+    opts.flush_threshold = 1'000'000;
+    opts.on_flush = [&](std::unordered_set<std::string>&) { called = true; };
+
+    auto file = make_blkfile({make_block({make_tx({{0, P2PKH_SCRIPT}})})});
+    std::unordered_set<std::string> addrs;
+    scan(file, addrs, opts);
+
+    EXPECT_FALSE(called);
+    EXPECT_EQ(addrs.size(), size_t(1));
+}
+
 // ---- main ----
 
 int main() {
