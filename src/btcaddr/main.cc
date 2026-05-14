@@ -106,7 +106,7 @@ static void print_help(const char* prog) {
         "\n"
         "Options:\n"
         "  --max-memory N  Limit address set to N MB of RAM.\n"
-        "                  When exceeded, sorted chunks are written to /tmp\n"
+        "                  When exceeded, sorted chunks are flushed to disk\n"
         "                  and merged at the end (external sort).\n"
         "                  Default: 90%% of MemAvailable",
         prog);
@@ -117,6 +117,9 @@ static void print_help(const char* prog) {
         fprintf(stdout, " (could not detect; unlimited)\n");
 
     fprintf(stdout,
+        "  --chunk-dir D   Directory for temporary chunk files (default: /tmp).\n"
+        "                  Use a path on a real disk if /tmp is a RAM disk\n"
+        "                  (e.g. tmpfs) and too small for the chunks.\n"
         "  --testnet       Use testnet address encoding and default magic\n"
         "                  (sets magic to 0b110907 automatically)\n"
         "  --no-p2pk       Skip P2PK outputs (omit derived P2PKH equivalents)\n"
@@ -138,8 +141,9 @@ static void print_help(const char* prog) {
         "Examples:\n"
         "  %s ~/.bitcoin/blocks addrs.txt\n"
         "  %s --max-memory 2048 ~/.bitcoin/blocks addrs.txt\n"
+        "  %s --max-memory 2048 --chunk-dir /data/scratch ~/.bitcoin/blocks addrs.txt\n"
         "  %s --testnet ~/.bitcoin/testnet3/blocks testnet_addrs.txt\n",
-        prog, prog, prog);
+        prog, prog, prog, prog);
 }
 
 static bool parse_magic(const char* hex, uint8_t out[4]) {
@@ -159,6 +163,7 @@ int main(int argc, char* argv[]) {
     std::string blocks_dir, output_file;
     size_t max_memory_mb = 0;
     bool max_memory_set = false;
+    std::string chunk_dir = "/tmp";
 
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
@@ -179,6 +184,12 @@ int main(int argc, char* argv[]) {
                 fprintf(stderr, "error: --magic must be 8 hex chars, e.g. f9beb4d9\n");
                 return 1;
             }
+        } else if (strcmp(argv[i], "--chunk-dir") == 0) {
+            if (i+1 >= argc) {
+                fprintf(stderr, "error: --chunk-dir requires a path\n");
+                return 1;
+            }
+            chunk_dir = argv[++i];
         } else if (strcmp(argv[i], "--max-memory") == 0) {
             if (i+1 >= argc) {
                 fprintf(stderr, "error: --max-memory requires a value in MB\n");
@@ -254,8 +265,8 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Magic:   %02x%02x%02x%02x\n",
             opts.magic[0], opts.magic[1], opts.magic[2], opts.magic[3]);
     if (flush_threshold > 0)
-        fprintf(stderr, "Memory:  %zu MB limit (~%zu addrs/chunk)\n",
-                max_memory_mb, flush_threshold);
+        fprintf(stderr, "Memory:  %zu MB limit (~%zu addrs/chunk), chunks in %s\n",
+                max_memory_mb, flush_threshold, chunk_dir.c_str());
     else
         fprintf(stderr, "Memory:  unlimited\n");
     fprintf(stderr, "P2PK:    %s\n\n", opts.include_p2pk ? "included" : "skipped");
@@ -274,7 +285,7 @@ int main(int argc, char* argv[]) {
     if (flush_threshold > 0) {
         opts.flush_threshold = flush_threshold;
         opts.on_flush = [&](std::unordered_set<std::string>& set) {
-            auto path = "/tmp/btcaddr_" + std::to_string(pid)
+            auto path = chunk_dir + "/btcaddr_" + std::to_string(pid)
                         + "_" + std::to_string(chunk_counter++) + ".chunk";
             chunk_paths.push_back(path);
 
