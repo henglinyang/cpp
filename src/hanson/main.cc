@@ -14,11 +14,12 @@ static void usage(const char* argv0) {
         "  --program <beginner|advanced>       (default: beginner)\n"
         "  --goal <H:MM:SS>                    marathon goal time (default: 3:30:00)\n"
         "  --tcx <dir>                         export SOS workouts as TCX files\n"
+        "  --json <dir>                        export SOS workouts as Garmin JSON files\n"
         "  --age <N>                           athlete age for MAF HR (default: 35)\n"
         "  -h, --help\n\n"
         "Examples:\n"
         "  %s --program beginner --goal 4:00:00\n"
-        "  %s --program advanced --goal 3:15:00 --tcx ./tcx --age 40\n",
+        "  %s --program advanced --goal 3:15:00 --json ./json --age 40\n",
         argv0, argv0, argv0);
 }
 
@@ -26,6 +27,7 @@ int main(int argc, char* argv[]) {
     std::string program_str = "beginner";
     std::string goal        = "3:30:00";
     std::string tcx_dir;
+    std::string json_dir;
     int age = 35;
 
     for (int i = 1; i < argc; i++) {
@@ -38,6 +40,8 @@ int main(int argc, char* argv[]) {
             goal = argv[++i];
         } else if (!strcmp(argv[i], "--tcx") && i+1 < argc) {
             tcx_dir = argv[++i];
+        } else if (!strcmp(argv[i], "--json") && i+1 < argc) {
+            json_dir = argv[++i];
         } else if (!strcmp(argv[i], "--age") && i+1 < argc) {
             age = std::stoi(argv[++i]);
         } else {
@@ -62,6 +66,10 @@ int main(int argc, char* argv[]) {
         if (!tcx_dir.empty()) {
             mkdir(tcx_dir.c_str(), 0755);
             hanson::export_plan_to_tcx(plan, tcx_dir, age);
+        }
+        if (!json_dir.empty()) {
+            mkdir(json_dir.c_str(), 0755);
+            hanson::export_plan_to_json(plan, json_dir, age);
         }
     } catch (const std::exception& e) {
         fprintf(stderr, "error: %s\n", e.what());

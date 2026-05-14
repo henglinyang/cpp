@@ -74,6 +74,7 @@ void writeTcx(const std::vector<RecordData>& records,
               std::ostream& out);
 
 void writeWorkoutTcx(const WorkoutData& workout, std::ostream& out);
+void writeWorkoutJson(const WorkoutData& workout, std::ostream& out);
 
 // Decodes a FIT binary stream. Throws std::runtime_error on fatal decode failure.
 FitData decodeFit(std::istream& file);

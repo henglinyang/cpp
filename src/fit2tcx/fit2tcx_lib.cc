@@ -260,6 +260,155 @@ static const char* intensityToTcx(uint8_t intensity) {
     return (intensity == FIT_INTENSITY_REST) ? "Resting" : "Active";
 }
 
+// ---- Garmin Connect workout JSON writer ----
+
+static std::string jsonStr(const std::string& s) {
+    std::string r = "\"";
+    for (unsigned char c : s) {
+        if      (c == '"')  r += "\\\"";
+        else if (c == '\\') r += "\\\\";
+        else if (c == '\n') r += "\\n";
+        else if (c == '\r') r += "\\r";
+        else if (c == '\t') r += "\\t";
+        else r += static_cast<char>(c);
+    }
+    return r + "\"";
+}
+
+static std::string jsonDbl(double v) {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%.7g", v);
+    std::string s = buf;
+    if (s.find('.') == std::string::npos && s.find('e') == std::string::npos)
+        s += ".0";
+    return s;
+}
+
+static void writeExecStep(std::ostream& out, const WorkoutStepData& step,
+                           int& ord, bool inRepeat) {
+    const char* stepKey; int stepTypeId;
+    switch (step.intensity) {
+        case FIT_INTENSITY_WARMUP:   stepKey = "warmup";   stepTypeId = 1; break;
+        case FIT_INTENSITY_COOLDOWN: stepKey = "cooldown"; stepTypeId = 2; break;
+        case FIT_INTENSITY_REST:     stepKey = "recovery"; stepTypeId = 4; break;
+        default:                     stepKey = "interval"; stepTypeId = 3; break;
+    }
+
+    out << "{\"type\":\"ExecutableStepDTO\","
+        << "\"stepId\":0,"
+        << "\"stepOrder\":" << ord++ << ","
+        << "\"stepType\":{\"stepTypeId\":" << stepTypeId
+        <<   ",\"stepTypeKey\":\"" << stepKey
+        <<   "\",\"displayOrder\":" << stepTypeId << "},"
+        << "\"childStepId\":" << (inRepeat ? "1" : "null") << ",";
+
+    out << "\"description\":"
+        << (step.has_name && !step.name.empty() ? jsonStr(step.name) : "null") << ",";
+
+    if (step.duration_type == FIT_WKT_STEP_DURATION_TIME) {
+        out << "\"endCondition\":{\"conditionTypeId\":2,\"conditionTypeKey\":\"time\","
+            <<   "\"displayOrder\":2,\"displayable\":true},"
+            << "\"endConditionValue\":" << jsonDbl(step.duration_value / 1000.0) << ",";
+    } else {
+        out << "\"endCondition\":{\"conditionTypeId\":3,\"conditionTypeKey\":\"distance\","
+            <<   "\"displayOrder\":3,\"displayable\":true},"
+            << "\"endConditionValue\":" << jsonDbl(step.duration_value / 100.0) << ",";
+    }
+
+    out << "\"preferredEndConditionUnit\":null,\"endConditionCompare\":null,";
+
+    if (step.target_type == FIT_WKT_STEP_TARGET_SPEED &&
+        (step.has_target_low || step.has_target_high)) {
+        out << "\"targetType\":{\"workoutTargetTypeId\":6,"
+            <<   "\"workoutTargetTypeKey\":\"pace.zone\",\"displayOrder\":6},"
+            << "\"targetValueOne\":" << jsonDbl(step.target_high / 1000.0) << ","
+            << "\"targetValueTwo\":" << jsonDbl(step.target_low  / 1000.0) << ",";
+    } else {
+        out << "\"targetType\":{\"workoutTargetTypeId\":1,"
+            <<   "\"workoutTargetTypeKey\":\"no.target\",\"displayOrder\":1},"
+            << "\"targetValueOne\":null,\"targetValueTwo\":null,";
+    }
+
+    out << "\"targetValueUnit\":null,\"zoneNumber\":null,"
+        << "\"secondaryTargetType\":null,\"secondaryTargetValueOne\":null,"
+        << "\"secondaryTargetValueTwo\":null,\"secondaryTargetValueUnit\":null,"
+        << "\"secondaryZoneNumber\":null,\"endConditionZone\":null,"
+        << "\"strokeType\":{\"strokeTypeId\":0,\"strokeTypeKey\":null,\"displayOrder\":0},"
+        << "\"equipmentType\":{\"equipmentTypeId\":0,\"equipmentTypeKey\":null,\"displayOrder\":0},"
+        << "\"category\":null,\"exerciseName\":null,\"workoutProvider\":null,"
+        << "\"providerExerciseSourceId\":null,\"weightValue\":null,\"weightUnit\":null}";
+}
+
+static void writeRepeatStep(std::ostream& out, const WorkoutStepData& step, int& ord) {
+    int repeatOrd = ord++;
+    out << "{\"type\":\"RepeatGroupDTO\","
+        << "\"stepId\":0,"
+        << "\"stepOrder\":" << repeatOrd << ","
+        << "\"stepType\":{\"stepTypeId\":6,\"stepTypeKey\":\"repeat\",\"displayOrder\":6},"
+        << "\"childStepId\":1,"
+        << "\"numberOfIterations\":" << step.repetitions << ","
+        << "\"workoutSteps\":[";
+    for (size_t i = 0; i < step.children.size(); i++) {
+        if (i > 0) out << ",";
+        writeExecStep(out, step.children[i], ord, true);
+    }
+    out << "],"
+        << "\"endConditionValue\":" << jsonDbl(static_cast<double>(step.repetitions)) << ","
+        << "\"preferredEndConditionUnit\":null,\"endConditionCompare\":null,"
+        << "\"endCondition\":{\"conditionTypeId\":7,\"conditionTypeKey\":\"iterations\","
+        <<   "\"displayOrder\":7,\"displayable\":false},"
+        << "\"skipLastRestStep\":false,\"smartRepeat\":false}";
+}
+
+void writeWorkoutJson(const WorkoutData& workout, std::ostream& out) {
+    const char* sportKey = "other";
+    int sportTypeId = 5;
+    if (workout.has_sport) {
+        switch (workout.sport) {
+            case FIT_SPORT_RUNNING:  sportKey = "running"; sportTypeId = 1; break;
+            case FIT_SPORT_CYCLING:  sportKey = "cycling"; sportTypeId = 2; break;
+            case FIT_SPORT_SWIMMING: sportKey = "swimming"; sportTypeId = 5; break;
+            default: break;
+        }
+    }
+    std::string sportObj = std::string("{\"sportTypeId\":") + std::to_string(sportTypeId)
+        + ",\"sportTypeKey\":\"" + sportKey + "\",\"displayOrder\":1}";
+
+    // Build the step list (stepOrder counter is global across all steps + children).
+    std::ostringstream stepsOut;
+    int ord = 1;
+    for (size_t i = 0; i < workout.steps.size(); i++) {
+        if (i > 0) stepsOut << ",";
+        const auto& s = workout.steps[i];
+        if (s.is_repeat) writeRepeatStep(stepsOut, s, ord);
+        else             writeExecStep(stepsOut, s, ord, false);
+    }
+
+    const std::string name = workout.has_name ? workout.name : "";
+    out << "{\"workoutId\":0,\"ownerId\":0,\"workoutName\":" << jsonStr(name)
+        << ",\"description\":\"\",\"updatedDate\":null,\"createdDate\":null"
+        << ",\"sportType\":" << sportObj
+        << ",\"subSportType\":null,\"trainingPlanId\":null,\"author\":null"
+        << ",\"sharedWithUsers\":null,\"estimatedDurationInSecs\":null"
+        << ",\"estimatedDistanceInMeters\":null"
+        << ",\"workoutSegments\":[{\"segmentOrder\":1"
+        << ",\"sportType\":" << sportObj
+        << ",\"poolLengthUnit\":null,\"poolLength\":null,\"avgTrainingSpeed\":null"
+        << ",\"estimatedDurationInSecs\":null,\"estimatedDistanceInMeters\":null"
+        << ",\"estimatedDistanceUnit\":null,\"estimateType\":null,\"description\":null"
+        << ",\"workoutSteps\":[" << stepsOut.str() << "]}]"
+        << ",\"poolLength\":null,\"poolLengthUnit\":null,\"locale\":null"
+        << ",\"workoutProvider\":null,\"workoutSourceId\":null,\"uploadTimestamp\":null"
+        << ",\"atpPlanId\":null,\"consumer\":null,\"consumerName\":null"
+        << ",\"consumerImageURL\":null,\"consumerWebsiteURL\":null"
+        << ",\"workoutNameI18nKey\":null,\"descriptionI18nKey\":null"
+        << ",\"avgTrainingSpeed\":null,\"estimateType\":null"
+        << ",\"estimatedDistanceUnit\":null,\"workoutThumbnailUrl\":null"
+        << ",\"isSessionTransitionEnabled\":null,\"shared\":false}";
+}
+
+// ---- TCX writer ----
+
 // Write the content of one Step_t node (StepId, Name, Duration, Intensity, Target).
 static void writeStepContent(pugi::xml_node node, const WorkoutStepData& step) {
     node.append_child("StepId").text().set(static_cast<int>(step.step_index) + 1);
