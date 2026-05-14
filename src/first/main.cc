@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <string>
+#include <sys/stat.h>
 
 static void usage(const char* argv0) {
     fprintf(stderr,
@@ -58,8 +59,10 @@ int main(int argc, char* argv[]) {
     try {
         auto plan = first::generate_plan(goal, distance);
         first::print_plan(plan);
-        if (!tcx_dir.empty())
+        if (!tcx_dir.empty()) {
+            mkdir(tcx_dir.c_str(), 0755);
             first::export_plan_to_tcx(plan, tcx_dir, age);
+        }
     } catch (const std::exception& e) {
         fprintf(stderr, "error: %s\n", e.what());
         return 1;
