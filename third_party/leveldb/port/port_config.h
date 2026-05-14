@@ -1,0 +1,11 @@
+// Generated for Linux/POSIX build (no CRC32C library, no Snappy).
+#ifndef STORAGE_LEVELDB_PORT_PORT_CONFIG_H_
+#define STORAGE_LEVELDB_PORT_PORT_CONFIG_H_
+
+#define HAVE_FDATASYNC 1
+#define HAVE_FULLFSYNC 0
+#define HAVE_O_CLOEXEC 1
+#define HAVE_CRC32C 0
+#define HAVE_SNAPPY 0
+
+#endif  // STORAGE_LEVELDB_PORT_PORT_CONFIG_H_
