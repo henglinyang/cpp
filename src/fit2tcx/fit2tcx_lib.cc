@@ -321,12 +321,36 @@ void writeWorkoutTcx(const WorkoutData& workout, std::ostream& out) {
         if (step.target_type == FIT_WKT_STEP_TARGET_HEART_RATE) {
             auto tgt = stepNode.append_child("Target");
             tgt.append_attribute("xsi:type") = "HeartRate_t";
+            if (step.has_target_low || step.has_target_high) {
+                auto zone = tgt.append_child("HeartRateZone");
+                zone.append_attribute("xsi:type") = "CustomHeartRateZone_t";
+                if (step.has_target_low) {
+                    auto lo = zone.append_child("Low");
+                    lo.append_attribute("xsi:type") = "HeartRateInBeatsPerMinute_t";
+                    lo.append_child("Value").text().set((int)step.target_low);
+                }
+                if (step.has_target_high) {
+                    auto hi = zone.append_child("High");
+                    hi.append_attribute("xsi:type") = "HeartRateInBeatsPerMinute_t";
+                    hi.append_child("Value").text().set((int)step.target_high);
+                }
+            }
         } else if (step.target_type == FIT_WKT_STEP_TARGET_CADENCE) {
             auto tgt = stepNode.append_child("Target");
             tgt.append_attribute("xsi:type") = "Cadence_t";
         } else if (step.target_type == FIT_WKT_STEP_TARGET_SPEED) {
             auto tgt = stepNode.append_child("Target");
             tgt.append_attribute("xsi:type") = "Speed_t";
+            if (step.has_target_low || step.has_target_high) {
+                auto zone = tgt.append_child("SpeedZone");
+                zone.append_attribute("xsi:type") = "CustomSpeedZone_t";
+                if (step.has_target_low)
+                    zone.append_child("LowInMetersPerSecond").text().set(
+                        step.target_low / 1000.0);
+                if (step.has_target_high)
+                    zone.append_child("HighInMetersPerSecond").text().set(
+                        step.target_high / 1000.0);
+            }
         } else if (step.target_type == FIT_WKT_STEP_TARGET_POWER) {
             auto tgt = stepNode.append_child("Target");
             tgt.append_attribute("xsi:type") = "Power_t";

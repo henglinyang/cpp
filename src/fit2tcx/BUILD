@@ -4,6 +4,7 @@ cc_library(
     name = "fit2tcx_lib",
     srcs = ["fit2tcx_lib.cc"],
     hdrs = ["fit2tcx.h"],
+    visibility = ["//visibility:public"],
     deps = [
         "//third_party/garmin/fit-sdk:fit-sdk",
         "//third_party/pugixml-1.15:pugixml",

@@ -8,9 +8,22 @@ cc_library(
     visibility = ["//visibility:public"],
 )
 
+cc_library(
+    name = "first_tcx_lib",
+    srcs = ["tcx_export.cc"],
+    hdrs = ["tcx_export.h"],
+    deps = [
+        ":first_lib",
+        "//src/fit2tcx:fit2tcx_lib",
+    ],
+)
+
 cc_binary(
     name = "first",
     srcs = ["main.cc"],
     copts = ["-std=c++20"],
-    deps = [":first_lib"],
+    deps = [
+        ":first_lib",
+        ":first_tcx_lib",
+    ],
 )
