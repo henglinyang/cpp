@@ -1,12 +1,55 @@
 #include "parser.h"
 #include "src/btcwallet/crypto.h"
 
+#include <algorithm>
 #include <cstring>
 #include <fstream>
 #include <stdexcept>
 #include <vector>
 
 namespace btcaddr {
+
+// ---- XOR obfuscation helpers ----
+
+static std::string hex8(const uint8_t* k) {
+    static const char H[] = "0123456789abcdef";
+    std::string s(16, 0);
+    for (int i = 0; i < 8; i++) {
+        s[i*2]   = H[(k[i] >> 4) & 0xf];
+        s[i*2+1] = H[k[i] & 0xf];
+    }
+    return s;
+}
+
+// Scan for an 8-byte repeating XOR key using the coinbase prev-txid zero region.
+// Returns true and fills key_out[8] if detected; validates by checking decrypted
+// magic against all known network magics.
+static bool detect_xor_key(const std::vector<uint8_t>& data, uint8_t key_out[8]) {
+    static const uint8_t KNOWN[][4] = {
+        {0xf9, 0xbe, 0xb4, 0xd9},  // mainnet
+        {0x0b, 0x11, 0x09, 0x07},  // testnet3
+        {0x0a, 0x03, 0xcf, 0x40},  // signet
+        {0xfa, 0xbf, 0xb5, 0xda},  // regtest
+    };
+    size_t limit = std::min(data.size(), (size_t)400);
+    for (size_t o = 80; o + 32 <= limit; ++o) {
+        bool repeats = true;
+        for (size_t i = 8; i < 32 && repeats; ++i)
+            if (data[o + i] != data[o + (i % 8)]) repeats = false;
+        if (!repeats) continue;
+
+        uint8_t key[8];
+        for (int j = 0; j < 8; j++) key[(o + j) % 8] = data[o + j];
+
+        for (auto& m : KNOWN) {
+            bool match = true;
+            for (int i = 0; i < 4 && match; i++)
+                if ((data[i] ^ key[i % 8]) != m[i]) match = false;
+            if (match) { memcpy(key_out, key, 8); return true; }
+        }
+    }
+    return false;
+}
 
 // ---- Safe buffer cursor ----
 
@@ -172,6 +215,15 @@ ScanStats scan_block_file(const std::string& path,
     if (!f.read(reinterpret_cast<char*>(data.data()),
                 static_cast<std::streamsize>(fsize)))
         throw std::runtime_error("read error: " + path);
+
+    // Auto-detect and strip 8-byte XOR obfuscation
+    if (fsize >= 8 && memcmp(data.data(), opts.magic, 4) != 0) {
+        uint8_t key[8];
+        if (detect_xor_key(data, key)) {
+            for (size_t i = 0; i < fsize; i++) data[i] ^= key[i % 8];
+            fprintf(stderr, "  [xor key: %s]\n", hex8(key).c_str());
+        }
+    }
 
     ScanStats stats;
     size_t pos = 0;
