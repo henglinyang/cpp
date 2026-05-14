@@ -152,9 +152,7 @@ static std::vector<PlanStep> repeat_steps(int n, int dist_m, int time_sec,
     for (int i = 0; i < n; i++) {
         snprintf(lbl, sizeof(lbl), "%dm rep %d/%d", dist_m, i+1, n);
         steps.push_back(run_step(dist_m, time_sec, lbl));
-        if (i < n - 1) {
-            steps.push_back(ri_dist ? recover_dist(ri_val) : recover_time(ri_val));
-        }
+        steps.push_back(ri_dist ? recover_dist(ri_val) : recover_time(ri_val));
     }
     return steps;
 }

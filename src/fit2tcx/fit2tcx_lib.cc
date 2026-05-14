@@ -256,11 +256,62 @@ void writeTcx(const std::vector<RecordData>& records,
 }
 
 static const char* intensityToTcx(uint8_t intensity) {
-    switch (intensity) {
-        case FIT_INTENSITY_WARMUP:   return "Warmup";
-        case FIT_INTENSITY_REST:     return "Resting";
-        case FIT_INTENSITY_COOLDOWN: return "Cooldown";
-        default:                     return "Active";
+    // TCX Intensity_t only permits "Active" or "Resting"
+    return (intensity == FIT_INTENSITY_REST) ? "Resting" : "Active";
+}
+
+// Write the content of one Step_t node (StepId, Name, Duration, Intensity, Target).
+static void writeStepContent(pugi::xml_node node, const WorkoutStepData& step) {
+    node.append_child("StepId").text().set(static_cast<int>(step.step_index) + 1);
+
+    if (step.has_name && !step.name.empty())
+        node.append_child("Name").text().set(step.name.c_str());
+
+    if (step.duration_type == FIT_WKT_STEP_DURATION_TIME) {
+        auto dur = node.append_child("Duration");
+        dur.append_attribute("xsi:type") = "Time_t";
+        dur.append_child("Seconds").text().set(static_cast<int>(step.duration_value / 1000));
+    } else if (step.duration_type == FIT_WKT_STEP_DURATION_DISTANCE) {
+        auto dur = node.append_child("Duration");
+        dur.append_attribute("xsi:type") = "Distance_t";
+        dur.append_child("Meters").text().set(static_cast<int>(step.duration_value / 100));
+    } else {
+        node.append_child("Duration").append_attribute("xsi:type") = "UserInitiated_t";
+    }
+
+    node.append_child("Intensity").text().set(intensityToTcx(step.intensity));
+
+    if (step.target_type == FIT_WKT_STEP_TARGET_HEART_RATE) {
+        auto tgt = node.append_child("Target");
+        tgt.append_attribute("xsi:type") = "HeartRate_t";
+        auto zone = tgt.append_child("HeartRateZone");
+        zone.append_attribute("xsi:type") = "CustomHeartRateZone_t";
+        // Both <Low> and <High> are required by the schema.
+        auto lo = zone.append_child("Low");
+        lo.append_attribute("xsi:type") = "HeartRateInBeatsPerMinute_t";
+        lo.append_child("Value").text().set(step.has_target_low ? (int)step.target_low : 1);
+        auto hi = zone.append_child("High");
+        hi.append_attribute("xsi:type") = "HeartRateInBeatsPerMinute_t";
+        hi.append_child("Value").text().set(step.has_target_high ? (int)step.target_high : 220);
+    } else if (step.target_type == FIT_WKT_STEP_TARGET_CADENCE) {
+        auto tgt = node.append_child("Target");
+        tgt.append_attribute("xsi:type") = "Cadence_t";
+        tgt.append_child("Low").text().set(0.0);
+        tgt.append_child("High").text().set(255.0);
+    } else if (step.target_type == FIT_WKT_STEP_TARGET_SPEED) {
+        auto tgt = node.append_child("Target");
+        tgt.append_attribute("xsi:type") = "Speed_t";
+        auto zone = tgt.append_child("SpeedZone");
+        zone.append_attribute("xsi:type") = "CustomSpeedZone_t";
+        // <ViewAs> is required by CustomSpeedZone_t before Low/High.
+        zone.append_child("ViewAs").text().set("Pace");
+        zone.append_child("LowInMetersPerSecond").text().set(
+            step.has_target_low ? step.target_low / 1000.0 : 0.1);
+        zone.append_child("HighInMetersPerSecond").text().set(
+            step.has_target_high ? step.target_high / 1000.0 : 20.0);
+    } else {
+        // Covers OPEN/POWER and anything else — schema uses None_t (not Open_t).
+        node.append_child("Target").append_attribute("xsi:type") = "None_t";
     }
 }
 
@@ -288,75 +339,22 @@ void writeWorkoutTcx(const WorkoutData& workout, std::ostream& out) {
         wktNode.append_child("Name").text().set(workout.name.c_str());
 
     for (const auto& step : workout.steps) {
-        auto stepNode = wktNode.append_child("Step");
-        stepNode.append_attribute("xsi:type") = "Step_t";
-
-        stepNode.append_child("StepId").text().set(
-            static_cast<int>(step.step_index) + 1);
-
-        if (step.has_name && !step.name.empty())
-            stepNode.append_child("Name").text().set(step.name.c_str());
-
-        // Duration
-        if (step.duration_type == FIT_WKT_STEP_DURATION_TIME) {
-            auto dur = stepNode.append_child("Duration");
-            dur.append_attribute("xsi:type") = "Time_t";
-            dur.append_child("Seconds").text().set(
-                static_cast<int>(step.duration_value / 1000));
-        } else if (step.duration_type == FIT_WKT_STEP_DURATION_DISTANCE) {
-            auto dur = stepNode.append_child("Duration");
-            dur.append_attribute("xsi:type") = "Distance_t";
-            dur.append_child("Meters").text().set(
-                static_cast<int>(step.duration_value / 100));
-        } else {
-            // OPEN or anything else — user-initiated
-            auto dur = stepNode.append_child("Duration");
-            dur.append_attribute("xsi:type") = "UserInitiated_t";
-        }
-
-        stepNode.append_child("Intensity").text().set(
-            intensityToTcx(step.intensity));
-
-        // Target
-        if (step.target_type == FIT_WKT_STEP_TARGET_HEART_RATE) {
-            auto tgt = stepNode.append_child("Target");
-            tgt.append_attribute("xsi:type") = "HeartRate_t";
-            if (step.has_target_low || step.has_target_high) {
-                auto zone = tgt.append_child("HeartRateZone");
-                zone.append_attribute("xsi:type") = "CustomHeartRateZone_t";
-                if (step.has_target_low) {
-                    auto lo = zone.append_child("Low");
-                    lo.append_attribute("xsi:type") = "HeartRateInBeatsPerMinute_t";
-                    lo.append_child("Value").text().set((int)step.target_low);
-                }
-                if (step.has_target_high) {
-                    auto hi = zone.append_child("High");
-                    hi.append_attribute("xsi:type") = "HeartRateInBeatsPerMinute_t";
-                    hi.append_child("Value").text().set((int)step.target_high);
-                }
+        if (step.is_repeat) {
+            auto stepNode = wktNode.append_child("Step");
+            stepNode.append_attribute("xsi:type") = "Repeat_t";
+            stepNode.append_child("StepId").text().set(
+                static_cast<int>(step.step_index) + 1);
+            stepNode.append_child("Repetitions").text().set(
+                static_cast<int>(step.repetitions));
+            for (const auto& child : step.children) {
+                auto childNode = stepNode.append_child("Child");
+                childNode.append_attribute("xsi:type") = "Step_t";
+                writeStepContent(childNode, child);
             }
-        } else if (step.target_type == FIT_WKT_STEP_TARGET_CADENCE) {
-            auto tgt = stepNode.append_child("Target");
-            tgt.append_attribute("xsi:type") = "Cadence_t";
-        } else if (step.target_type == FIT_WKT_STEP_TARGET_SPEED) {
-            auto tgt = stepNode.append_child("Target");
-            tgt.append_attribute("xsi:type") = "Speed_t";
-            if (step.has_target_low || step.has_target_high) {
-                auto zone = tgt.append_child("SpeedZone");
-                zone.append_attribute("xsi:type") = "CustomSpeedZone_t";
-                if (step.has_target_low)
-                    zone.append_child("LowInMetersPerSecond").text().set(
-                        step.target_low / 1000.0);
-                if (step.has_target_high)
-                    zone.append_child("HighInMetersPerSecond").text().set(
-                        step.target_high / 1000.0);
-            }
-        } else if (step.target_type == FIT_WKT_STEP_TARGET_POWER) {
-            auto tgt = stepNode.append_child("Target");
-            tgt.append_attribute("xsi:type") = "Power_t";
         } else {
-            auto tgt = stepNode.append_child("Target");
-            tgt.append_attribute("xsi:type") = "Open_t";
+            auto stepNode = wktNode.append_child("Step");
+            stepNode.append_attribute("xsi:type") = "Step_t";
+            writeStepContent(stepNode, step);
         }
     }
 

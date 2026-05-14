@@ -118,8 +118,7 @@ static std::vector<PS> intervals(int n, int dist_m, int pace_sec, double tol,
         char lbl[64];
         snprintf(lbl, sizeof(lbl), "%s %d/%d", name.c_str(), i+1, n);
         steps.push_back(run_step_dist(dist_m, pace_sec, tol, lbl));
-        if (i < n-1)
-            steps.push_back(recover_dist(jog_m));
+        steps.push_back(recover_dist(jog_m));
     }
     return steps;
 }
@@ -159,8 +158,7 @@ static std::vector<PS> build_speed_steps(WorkoutVariant v, const Paces& p) {
             for (size_t i = 0; i < segs.size(); i++) {
                 char lbl[32]; snprintf(lbl, sizeof(lbl), "%dm", segs[i].dist);
                 steps.push_back(run_step_dist(segs[i].dist, segs[i].pace_sec, 0.04, lbl));
-                if (i < segs.size()-1)
-                    steps.push_back(recover_dist(400));
+                steps.push_back(recover_dist(400));
             }
             return steps;
         }

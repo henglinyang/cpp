@@ -73,6 +73,20 @@ static WorkoutStepData plan_step_to_wsd(const PlanStep& ps, uint16_t idx) {
     return s;
 }
 
+// True when steps form N uniform (run, recover) pairs — collapse to Repeat_t.
+static bool is_uniform_interval(const std::vector<PlanStep>& steps) {
+    if (steps.size() < 4 || steps.size() % 2 != 0) return false;
+    const int run0 = steps[0].duration_val;
+    const int jog0 = steps[1].duration_val;
+    for (size_t j = 0; j < steps.size(); j += 2) {
+        if (steps[j].kind   != PlanStep::Kind::RUN)     return false;
+        if (steps[j+1].kind != PlanStep::Kind::RECOVER) return false;
+        if (steps[j].duration_val   != run0) return false;
+        if (steps[j+1].duration_val != jog0) return false;
+    }
+    return true;
+}
+
 void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outdir, int age) {
     const int maf_hr = 180 - age;
     const char* prog = plan.program == Program::BEGINNER ? "beg" : "adv";
@@ -98,9 +112,25 @@ void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outdir, int
             wkt.name = nbuf;
 
             uint16_t idx = 0;
-            wkt.steps.push_back(make_maf(idx++, 900, kInWarmup,   maf_hr, "MAF Warmup"));
-            for (const auto& ps : day.steps)
-                wkt.steps.push_back(plan_step_to_wsd(ps, idx++));
+            wkt.steps.push_back(make_maf(idx++, 900, kInWarmup, maf_hr, "MAF Warmup"));
+
+            if (is_uniform_interval(day.steps)) {
+                // Collapse N×(run+recover) into a single Repeat_t step.
+                uint32_t reps = static_cast<uint32_t>(day.steps.size() / 2);
+                WorkoutStepData repeat;
+                repeat.step_index  = idx++;
+                repeat.is_repeat   = true;
+                repeat.repetitions = reps;
+                uint16_t child_idx = idx;
+                repeat.children.push_back(plan_step_to_wsd(day.steps[0], child_idx));
+                repeat.children.push_back(plan_step_to_wsd(day.steps[1], child_idx + 1));
+                idx = child_idx + 2;
+                wkt.steps.push_back(repeat);
+            } else {
+                for (const auto& ps : day.steps)
+                    wkt.steps.push_back(plan_step_to_wsd(ps, idx++));
+            }
+
             wkt.steps.push_back(make_maf(idx++, 600, kInCooldown, maf_hr, "MAF Cooldown"));
 
             char nbuf2[128];

@@ -39,6 +39,11 @@ struct WorkoutStepData {
     uint8_t intensity = 0;
     std::string name;
     bool has_name = false;
+
+    // Repeat group (xsi:type="Repeat_t"): children defines the repeated template.
+    bool is_repeat = false;
+    uint32_t repetitions = 0;
+    std::vector<WorkoutStepData> children;
 };
 
 struct WorkoutData {

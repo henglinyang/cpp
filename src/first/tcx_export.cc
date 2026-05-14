@@ -5,6 +5,7 @@
 #include <fstream>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 // FIT constants (numeric values from fit_profile.hpp — avoids pulling in the SDK header)
 static constexpr uint8_t  kDurTime      = 0;  // TIME       (ms)
@@ -20,6 +21,19 @@ static constexpr uint8_t  kInCooldown   = 3;  // COOLDOWN
 static constexpr uint8_t  kSportRunning = 1;  // RUNNING
 
 namespace first {
+
+static bool is_uniform_interval(const std::vector<PlanStep>& steps) {
+    if (steps.size() < 4 || steps.size() % 2 != 0) return false;
+    const int run0 = steps[0].duration_val;
+    const int jog0 = steps[1].duration_val;
+    for (size_t j = 0; j < steps.size(); j += 2) {
+        if (steps[j].kind   != StepKind::RUN)     return false;
+        if (steps[j+1].kind != StepKind::RECOVER) return false;
+        if (steps[j].duration_val   != run0) return false;
+        if (steps[j+1].duration_val != jog0) return false;
+    }
+    return true;
+}
 
 static WorkoutStepData make_maf_step(uint16_t idx, uint32_t seconds,
                                      uint8_t intensity, int maf_hr,
@@ -102,8 +116,22 @@ void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outdir, int
             uint16_t idx = 0;
             wkt.steps.push_back(make_maf_step(idx++, 900, kInWarmup, maf_hr, "MAF Warmup"));
 
-            for (const auto& ps : *kr.steps)
-                wkt.steps.push_back(plan_step_to_workout(ps, idx++));
+            const auto& ps_list = *kr.steps;
+            if (is_uniform_interval(ps_list)) {
+                uint32_t reps = static_cast<uint32_t>(ps_list.size() / 2);
+                WorkoutStepData repeat;
+                repeat.step_index  = idx++;
+                repeat.is_repeat   = true;
+                repeat.repetitions = reps;
+                uint16_t child_idx = idx;
+                repeat.children.push_back(plan_step_to_workout(ps_list[0], child_idx));
+                repeat.children.push_back(plan_step_to_workout(ps_list[1], child_idx + 1));
+                idx = child_idx + 2;
+                wkt.steps.push_back(repeat);
+            } else {
+                for (const auto& ps : ps_list)
+                    wkt.steps.push_back(plan_step_to_workout(ps, idx++));
+            }
 
             wkt.steps.push_back(make_maf_step(idx++, 600, kInCooldown, maf_hr, "MAF Cooldown"));
 
