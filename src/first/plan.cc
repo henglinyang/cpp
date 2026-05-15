@@ -731,4 +731,9 @@ void print_plan(const TrainingPlan& plan) {
     printf("\n");
 }
 
+Plan::Plan(const std::string& goal, const std::string& distance)
+    : plan_(generate_plan(goal, distance)) {}
+
+void Plan::print() const { print_plan(plan_); }
+
 } // namespace first

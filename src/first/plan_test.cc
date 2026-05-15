@@ -1,6 +1,5 @@
 #include "plan.h"
 #include "tables.h"
-#include "tcx_export.h"
 
 #include <cassert>
 #include <cmath>
@@ -216,16 +215,16 @@ TEST(GeneratePlan, InvalidDistanceThrows) {
 // ---- TCX export smoke test ----
 
 TEST(ExportTcx, ProducesOutput) {
-    auto plan = first::generate_plan("3:15:00", "marathon");
-    first::export_plan_to_tcx(plan, "/tmp", 35);
+    first::Plan plan("3:15:00", "marathon");
+    plan.exportTcx("/tmp", 35);
     EXPECT_TRUE(true);
 }
 
 // ---- JSON export smoke test ----
 
 TEST(ExportJson, ProducesOutput) {
-    auto plan = first::generate_plan("3:15:00", "marathon");
-    first::export_plan_to_json(plan, "/tmp", 35);
+    first::Plan plan("3:15:00", "marathon");
+    plan.exportJson("/tmp", 35);
     EXPECT_TRUE(true);
 }
 

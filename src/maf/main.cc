@@ -7,12 +7,9 @@
 #include <stdexcept>
 #include <string>
 
-static constexpr uint8_t kDurTime      = 0;
-static constexpr uint8_t kDurDist      = 1;
-static constexpr uint8_t kDurOpen      = 5;
-static constexpr uint8_t kTgtHr        = 1;
-static constexpr uint8_t kInActive     = 0;
-static constexpr uint8_t kSportRunning = 1;
+static constexpr uint8_t kDurTime = 0;
+static constexpr uint8_t kDurDist = 1;
+static constexpr uint8_t kDurOpen = 5;
 
 static void usage(const char* prog) {
     fprintf(stdout,
@@ -41,39 +38,6 @@ static void usage(const char* prog) {
         "  %s --age 40 --laps 5                     # MAF test, 5 x 1mi\n"
         "  %s --age 40 --laps 1 --distance 5000     # MAF test, 1 x 5K\n",
         prog, prog, prog, prog, prog, prog);
-}
-
-static void add_run_step(WorkoutData& wkt, uint16_t& idx,
-                          uint8_t dur_type, uint32_t dur_val, int maf_hr) {
-    WorkoutStepData run;
-    run.step_index      = idx++;
-    run.duration_type   = dur_type;
-    run.duration_value  = dur_val;
-    run.intensity       = kInActive;
-    run.target_type     = kTgtHr;
-    run.has_target_low  = true;
-    run.target_low      = static_cast<uint32_t>(maf_hr - 8);
-    run.has_target_high = true;
-    run.target_high     = static_cast<uint32_t>(maf_hr);
-    wkt.steps.push_back(run);
-}
-
-static WorkoutData build_maf_workout(int age, int laps,
-                                      uint8_t run_dur_type, uint32_t run_dur_val) {
-    const int maf_hr = 180 - age;
-
-    WorkoutData wkt;
-    wkt.has_name  = true;
-    wkt.name      = "MAF";
-    wkt.has_sport = true;
-    wkt.sport     = kSportRunning;
-
-    uint16_t idx = 0;
-    push_maf_warmup(wkt, idx, 900, maf_hr);
-    for (int i = 0; i < laps; i++)
-        add_run_step(wkt, idx, run_dur_type, run_dur_val, maf_hr);
-    push_maf_cooldown(wkt, idx, 600, maf_hr);
-    return wkt;
 }
 
 int main(int argc, char* argv[]) {
@@ -127,7 +91,6 @@ int main(int argc, char* argv[]) {
     }
     if (test_mode && laps == 0) laps = 3;
 
-    // Resolve run step duration
     uint8_t  run_dur_type;
     uint32_t run_dur_val;
     if (duration_s > 0) {
@@ -138,14 +101,13 @@ int main(int argc, char* argv[]) {
         run_dur_val  = static_cast<uint32_t>(distance_m) * 100u;
     } else if (test_mode) {
         run_dur_type = kDurDist;
-        run_dur_val  = 1609u * 100u;  // default 1 mile per lap
+        run_dur_val  = 1609u * 100u;
     } else {
         run_dur_type = kDurOpen;
-        run_dur_val  = 0;             // lap-button press
+        run_dur_val  = 0;
     }
 
     const int effective_laps = test_mode ? laps : 1;
-
     const int maf_hr = 180 - age;
     if (laps > 0)
         fprintf(stderr, "MAF test   age=%d  maf_hr=%d  laps=%d  run_hr=[%d,%d]\n",
@@ -155,21 +117,21 @@ int main(int argc, char* argv[]) {
                 age, maf_hr, maf_hr - 8, maf_hr);
 
     try {
-        WorkoutData wkt = build_maf_workout(age, effective_laps, run_dur_type, run_dur_val);
+        MafWorkout wkt(age, effective_laps, run_dur_type, run_dur_val);
 
         if (!tcx_file.empty()) {
             std::ofstream ofs(tcx_file);
             if (!ofs) throw std::runtime_error("cannot open: " + tcx_file);
-            writeWorkoutTcx(wkt, ofs);
+            writeWorkoutTcx(wkt.data(), ofs);
         }
         if (!json_file.empty()) {
             std::ofstream ofs(json_file);
             if (!ofs) throw std::runtime_error("cannot open: " + json_file);
-            writeWorkoutJson(wkt, ofs);
+            writeWorkoutJson(wkt.data(), ofs);
             ofs << "\n";
         }
         if (tcx_file.empty() && json_file.empty())
-            writeWorkoutJson(wkt, std::cout);
+            writeWorkoutJson(wkt.data(), std::cout);
 
     } catch (const std::exception& e) {
         fprintf(stderr, "error: %s\n", e.what());

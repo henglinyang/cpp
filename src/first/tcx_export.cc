@@ -1,4 +1,4 @@
-#include "tcx_export.h"
+#include "plan.h"
 #include "src/fit2tcx/fit2tcx.h"
 #include "src/maf/maf.h"
 
@@ -125,7 +125,7 @@ static void for_each_kr(const TrainingPlan& plan, int age,
     }
 }
 
-void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outdir, int age) {
+static void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outdir, int age) {
     for_each_kr(plan, age, [&](const WorkoutData& wkt, int week, const char* tag) {
         std::string path = outdir + "/week_" + std::to_string(week) + "_" + tag + ".tcx";
         std::ofstream ofs(path);
@@ -134,7 +134,7 @@ void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outdir, int
     });
 }
 
-void export_plan_to_json(const TrainingPlan& plan, const std::string& outdir, int age) {
+static void export_plan_to_json(const TrainingPlan& plan, const std::string& outdir, int age) {
     for_each_kr(plan, age, [&](const WorkoutData& wkt, int week, const char* tag) {
         std::string path = outdir + "/week_" + std::to_string(week) + "_" + tag + ".json";
         std::ofstream ofs(path);
@@ -142,6 +142,13 @@ void export_plan_to_json(const TrainingPlan& plan, const std::string& outdir, in
         writeWorkoutJson(wkt, ofs);
         ofs << "\n";
     });
+}
+
+void Plan::exportTcx(const std::string& outdir, int age) const {
+    export_plan_to_tcx(plan_, outdir, age);
+}
+void Plan::exportJson(const std::string& outdir, int age) const {
+    export_plan_to_json(plan_, outdir, age);
 }
 
 } // namespace first

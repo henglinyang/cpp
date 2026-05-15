@@ -74,4 +74,14 @@ TrainingPlan generate_plan(const std::string& goal, const std::string& distance)
 // Print the plan to stdout.
 void print_plan(const TrainingPlan& plan);
 
+class Plan {
+public:
+    Plan(const std::string& goal, const std::string& distance);
+    void exportTcx(const std::string& outdir, int age) const;
+    void exportJson(const std::string& outdir, int age) const;
+    void print() const;
+private:
+    TrainingPlan plan_;
+};
+
 } // namespace first

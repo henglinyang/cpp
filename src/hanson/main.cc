@@ -1,5 +1,4 @@
 #include "plan.h"
-#include "tcx_export.h"
 
 #include <cstdio>
 #include <cstring>
@@ -61,15 +60,15 @@ int main(int argc, char* argv[]) {
     }
 
     try {
-        auto plan = hanson::generate_plan(goal, prog);
-        hanson::print_plan(plan);
+        hanson::Plan plan(goal, prog);
+        plan.print();
         if (!tcx_dir.empty()) {
             mkdir(tcx_dir.c_str(), 0755);
-            hanson::export_plan_to_tcx(plan, tcx_dir, age);
+            plan.exportTcx(tcx_dir, age);
         }
         if (!json_dir.empty()) {
             mkdir(json_dir.c_str(), 0755);
-            hanson::export_plan_to_json(plan, json_dir, age);
+            plan.exportJson(json_dir, age);
         }
     } catch (const std::exception& e) {
         fprintf(stderr, "error: %s\n", e.what());

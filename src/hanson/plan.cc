@@ -369,4 +369,9 @@ void print_plan(const TrainingPlan& plan) {
     printf("\nAll SOS workouts include 1-2mi warmup + cooldown (beginner) or 1.5-3mi (advanced).\n");
 }
 
+Plan::Plan(const std::string& goal, Program prog)
+    : plan_(generate_plan(goal, prog)) {}
+
+void Plan::print() const { print_plan(plan_); }
+
 } // namespace hanson

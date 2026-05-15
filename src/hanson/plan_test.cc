@@ -1,6 +1,5 @@
 #include "plan.h"
 #include "tables.h"
-#include "tcx_export.h"
 
 #include <cassert>
 #include <cmath>
@@ -212,19 +211,16 @@ TEST(GeneratePlan, EarlyEasyWeekNoSteps) {
 // ---- TCX export smoke test ----
 
 TEST(ExportTcx, ProducesXmlOutput) {
-    auto plan = hanson::generate_plan("3:30:00", hanson::Program::BEGINNER);
-    std::ostringstream out;
-    // week_06_tue.tcx
-    hanson::export_plan_to_tcx(plan, "/tmp", 35);
-    // If we reach here without exception, export worked.
+    hanson::Plan plan("3:30:00", hanson::Program::BEGINNER);
+    plan.exportTcx("/tmp", 35);
     EXPECT_TRUE(true);
 }
 
 // ---- JSON export smoke test ----
 
 TEST(ExportJson, ProducesJsonOutput) {
-    auto plan = hanson::generate_plan("3:30:00", hanson::Program::BEGINNER);
-    hanson::export_plan_to_json(plan, "/tmp", 35);
+    hanson::Plan plan("3:30:00", hanson::Program::BEGINNER);
+    plan.exportJson("/tmp", 35);
     EXPECT_TRUE(true);
 }
 
