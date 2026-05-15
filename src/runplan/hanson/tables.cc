@@ -8,6 +8,16 @@
 namespace hanson {
 
 // kT35: 27 rows × 10 cols
+// col 0: marathon goal (sec), descending
+// col 1: half-marathon goal (sec)
+// col 2: easy_a (sec/mile, slowest easy)
+// col 3: easy_b (sec/mile)
+// col 4: easy_c (sec/mile)
+// col 5: moderate_long (sec/mile, long run)
+// col 6: tempo / marathon goal pace (sec/mile)
+// col 7: strength workout pace (sec/mile)
+// col 8: 10K pace (sec/mile)
+// col 9: 5K pace (sec/mile)
 static const int kT35[][10] = {
     {18000, 8640, 862, 812, 761, 736, 687, 677, 630, 604},
     {17100, 8220, 823, 775, 725, 701, 652, 642, 598, 574},
