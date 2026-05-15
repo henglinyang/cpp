@@ -59,10 +59,11 @@ void push_maf_cooldown(WorkoutData& wkt, uint16_t& idx,
     push_steps(wkt, idx, total_seconds, kInCooldown, maf_hr, true);
 }
 
-MafWorkout::MafWorkout(int age, int laps, uint8_t run_dur_type, uint32_t run_dur_val) {
+MafWorkout::MafWorkout(int age, int laps, uint8_t run_dur_type, uint32_t run_dur_val,
+                       const std::string& name) {
     const int maf_hr = 180 - age;
     wkt_.has_name  = true;
-    wkt_.name      = "MAF";
+    wkt_.name      = name;
     wkt_.has_sport = true;
     wkt_.sport     = kSportRunning;
 

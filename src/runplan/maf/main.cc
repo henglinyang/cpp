@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
                 age, maf_hr, maf_hr - 8, maf_hr);
 
     try {
-        MafWorkout wkt(age, effective_laps, run_dur_type, run_dur_val);
+        MafWorkout wkt(age, effective_laps, run_dur_type, run_dur_val, test_mode ? "MAF Test" : "MAF");
 
         if (!tcx_file.empty()) {
             std::ofstream ofs(tcx_file);
