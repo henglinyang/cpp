@@ -201,6 +201,42 @@ TEST(GeneratePlan, LadderNotUniformDistances) {
     EXPECT_EQ(steps[6].duration_val, 1600);
 }
 
+// ---- lookup_paces: 5:01:00 goal (above table max, clamps to row 0) ----
+
+// 5:01:00 = 18060s > kT35 max key 18000 → interp_desc clamps to row 0.
+// 5K pace = 604 s/mi → 5K race time ≈ 1876s > kR* max key 1800 → clamps to last row.
+// Strength tables: 18060 > kS* max key → clamps to last used row.
+TEST(LookupPaces, AboveTableMaxClampsEasyPaces) {
+    auto p = hanson::lookup_paces(18060);
+    EXPECT_EQ(p.easy_a,        862);
+    EXPECT_EQ(p.easy_b,        812);
+    EXPECT_EQ(p.easy_c,        761);
+    EXPECT_EQ(p.moderate_long, 736);
+}
+TEST(LookupPaces, AboveTableMaxClampsSosPaces) {
+    auto p = hanson::lookup_paces(18060);
+    EXPECT_EQ(p.tempo,    687);
+    EXPECT_EQ(p.strength, 677);
+    EXPECT_EQ(p.k10,      630);
+    EXPECT_EQ(p.k5,       604);
+}
+TEST(LookupPaces, AboveTableMaxClampsSpeedIntervals) {
+    auto p = hanson::lookup_paces(18060);
+    EXPECT_EQ(p.r400,  148);
+    EXPECT_EQ(p.r600,  216);
+    EXPECT_EQ(p.r800,  295);
+    EXPECT_EQ(p.r1k,   360);
+    EXPECT_EQ(p.r1200, 443);
+    EXPECT_EQ(p.r1600, 590);
+}
+TEST(LookupPaces, AboveTableMaxClampsStrengthIntervals) {
+    auto p = hanson::lookup_paces(18060);
+    EXPECT_EQ(p.s1mi,   650);
+    EXPECT_EQ(p.s1_5mi, 975);
+    EXPECT_EQ(p.s2mi,  1040);
+    EXPECT_EQ(p.s3mi,  1950);
+}
+
 // Early weeks (no SOS) have empty steps
 TEST(GeneratePlan, EarlyEasyWeekNoSteps) {
     auto plan = hanson::generate_plan("3:30:00", hanson::Program::BEGINNER);
