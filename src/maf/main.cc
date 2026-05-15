@@ -22,7 +22,8 @@ static void usage(const char* prog) {
         "\n"
         "Options:\n"
         "  --age <N>          Athlete age (default: 50). maf_hr = 180 - age.\n"
-        "  --distance <m>     Run distance in meters (default: lap-button press)\n"
+        "  --distance <d>     Run distance: meters, or 5k/10k/half/marathon/full\n"
+        "                   (default: lap-button press in run mode, 1mi in test mode)\n"
         "  --duration <s>     Run duration in seconds; overrides --distance\n"
         "  --test             MAF test mode: N timed laps to track split progress\n"
         "  --laps <N>         Number of test laps (default: 3, implies --test)\n"
@@ -94,7 +95,12 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp(argv[i], "--laps") && i+1 < argc) {
             laps = std::stoi(argv[++i]);
         } else if (!strcmp(argv[i], "--distance") && i+1 < argc) {
-            distance_m = std::stoi(argv[++i]);
+            const char* d = argv[++i];
+            if      (!strcmp(d, "5k"))                      distance_m = 5000;
+            else if (!strcmp(d, "10k"))                     distance_m = 10000;
+            else if (!strcmp(d, "half"))                    distance_m = 21097;
+            else if (!strcmp(d, "marathon") || !strcmp(d, "full")) distance_m = 42195;
+            else                                            distance_m = std::stoi(d);
         } else if (!strcmp(argv[i], "--duration") && i+1 < argc) {
             duration_s = std::stoi(argv[++i]);
         } else if (!strcmp(argv[i], "--tcx") && i+1 < argc) {
