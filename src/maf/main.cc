@@ -21,7 +21,7 @@ static void usage(const char* prog) {
         "Generate a MAF heart-rate workout: 15-min warmup + MAF run + 10-min cooldown.\n"
         "\n"
         "Options:\n"
-        "  --age <N>          Athlete age (default: 35). maf_hr = 180 - age.\n"
+        "  --age <N>          Athlete age (default: 50). maf_hr = 180 - age.\n"
         "  --distance <m>     Main run distance in meters (default: open duration)\n"
         "  --duration <s>     Main run duration in seconds (default: open duration)\n"
         "  --tcx <file>       Write workout as TCX to file\n"
@@ -68,7 +68,7 @@ static WorkoutData build_maf_workout(int age, uint8_t run_dur_type,
 }
 
 int main(int argc, char* argv[]) {
-    int age = 35;
+    int age = 50;
     int distance_m  = 0;
     int duration_s  = 0;
     std::string tcx_file;

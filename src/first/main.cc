@@ -14,7 +14,7 @@ static void usage(const char* argv0) {
         "  --goal <H:MM:SS or M:SS>             goal finish time (default: 3:15:00)\n"
         "  --tcx <dir>                          export workouts as TCX files into dir\n"
         "  --json <dir>                         export workouts as Garmin JSON files into dir\n"
-        "  --age <N>                            athlete age for MAF HR (default: 35)\n"
+        "  --age <N>                            athlete age for MAF HR (default: 50)\n"
         "  -h, --help\n\n"
         "Examples:\n"
         "  %s --distance marathon --goal 3:15:00\n"
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     std::string goal     = "3:15:00";
     std::string tcx_dir;
     std::string json_dir;
-    int age = 35;
+    int age = 50;
 
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
