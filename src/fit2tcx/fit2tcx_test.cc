@@ -427,14 +427,14 @@ TEST(WriteWorkoutTcx, IntensityWarmup) {
     w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_WARMUP));
     auto doc = parseTcx(runWriteWorkoutTcx(w));
     auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
-    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Warmup");
+    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Active");
 }
 TEST(WriteWorkoutTcx, IntensityCooldown) {
     WorkoutData w;
     w.steps.push_back(makeStep(FIT_WKT_STEP_DURATION_OPEN, 0, FIT_WKT_STEP_TARGET_OPEN, FIT_INTENSITY_COOLDOWN));
     auto doc = parseTcx(runWriteWorkoutTcx(w));
     auto step = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout").child("Step");
-    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Cooldown");
+    EXPECT_STREQ(step.child("Intensity").text().as_string(), "Active");
 }
 TEST(WriteWorkoutTcx, IntensityRest) {
     WorkoutData w;
@@ -452,7 +452,7 @@ TEST(WriteWorkoutTcx, TargetOpen) {
     auto doc = parseTcx(runWriteWorkoutTcx(w));
     auto tgt = doc.child("TrainingCenterDatabase").child("Workouts").child("Workout")
                   .child("Step").child("Target");
-    EXPECT_STREQ(tgt.attribute("xsi:type").value(), "Open_t");
+    EXPECT_STREQ(tgt.attribute("xsi:type").value(), "None_t");
 }
 TEST(WriteWorkoutTcx, TargetHeartRate) {
     WorkoutData w;
