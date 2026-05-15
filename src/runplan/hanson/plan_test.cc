@@ -237,6 +237,42 @@ TEST(LookupPaces, AboveTableMaxClampsStrengthIntervals) {
     EXPECT_EQ(p.s3mi,  1950);
 }
 
+// ---- lookup_paces: 2:09:00 goal (below table min, clamps to last row) ----
+
+// 2:09:00 = 7740s < kT35 min key 7800 → interp_desc clamps to row 26 (last).
+// 5K pace = 262 s/mi → 5K race time ≈ 814s < kR* min key 930 → clamps to row 0.
+// Strength tables: 7740 < kS* min key 8880 → clamps to row 0.
+TEST(LookupPaces, BelowTableMinClampsEasyPaces) {
+    auto p = hanson::lookup_paces(7740);
+    EXPECT_EQ(p.easy_a,        395);
+    EXPECT_EQ(p.easy_b,        369);
+    EXPECT_EQ(p.easy_c,        343);
+    EXPECT_EQ(p.moderate_long, 328);
+}
+TEST(LookupPaces, BelowTableMinClampsSosPaces) {
+    auto p = hanson::lookup_paces(7740);
+    EXPECT_EQ(p.tempo,    297);
+    EXPECT_EQ(p.strength, 287);
+    EXPECT_EQ(p.k10,      273);
+    EXPECT_EQ(p.k5,       262);
+}
+TEST(LookupPaces, BelowTableMinClampsSpeedIntervals) {
+    auto p = hanson::lookup_paces(7740);
+    EXPECT_EQ(p.r400,   75);
+    EXPECT_EQ(p.r600,  112);
+    EXPECT_EQ(p.r800,  150);
+    EXPECT_EQ(p.r1k,   186);
+    EXPECT_EQ(p.r1200, 222);
+    EXPECT_EQ(p.r1600, 300);
+}
+TEST(LookupPaces, BelowTableMinClampsStrengthIntervals) {
+    auto p = hanson::lookup_paces(7740);
+    EXPECT_EQ(p.s1mi,   330);
+    EXPECT_EQ(p.s1_5mi, 495);
+    EXPECT_EQ(p.s2mi,   660);
+    EXPECT_EQ(p.s3mi,   990);
+}
+
 // Early weeks (no SOS) have empty steps
 TEST(GeneratePlan, EarlyEasyWeekNoSteps) {
     auto plan = hanson::generate_plan("3:30:00", hanson::Program::BEGINNER);
