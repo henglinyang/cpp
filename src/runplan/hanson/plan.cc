@@ -26,27 +26,27 @@ static RawDay tmp(double mi) { return {DayKind::TEMPO, WorkoutVariant::NONE, mi}
 // Beginner: 18 weeks, cols = Mon,Tue,Wed,Thu,Fri,Sat,Sun
 static const Week7 kBeginner[18] = {
   // Week 1-5: base building (all easy)
-  {easy(0), OFF,       OFF, easy(3), OFF,    easy(3), easy(4)},
-  {OFF,     OFF,       OFF, easy(2), OFF,    easy(3), easy(4)},
-  {OFF,     OFF,       OFF, easy(4), OFF,    easy(4), easy(4)},
-  {OFF,     OFF,       OFF, easy(5), OFF,    easy(4), easy(5)},
-  {OFF,     OFF,       OFF, easy(5), OFF,    easy(6), easy(8)},
+  {easy(0), easy(0),   OFF, easy(3), OFF,     easy(3), easy(4)},
+  {OFF,     easy(2),   OFF, easy(3), easy(3), easy(3), easy(4)},
+  {OFF,     easy(4),   OFF, easy(4), easy(4), easy(4), easy(5)},
+  {OFF,     easy(5),   OFF, easy(3), easy(3), easy(5), easy(5)},
+  {OFF,     easy(5),   OFF, easy(4), easy(5), easy(4), easy(6)},
   // Week 6-10: speed + tempo
-  {easy(4), spd(WorkoutVariant::S400),  OFF, tmp(5),  easy(4), easy(6),  lng(10)},
-  {easy(4), spd(WorkoutVariant::S600),  OFF, tmp(5),  easy(5), easy(6),  lng(10)},
-  {easy(6), spd(WorkoutVariant::S800),  OFF, tmp(5),  easy(6), easy(5),  lng(15)},
-  {easy(5), spd(WorkoutVariant::S1K),   OFF, tmp(8),  easy(5), easy(8),  lng(10)},
+  {easy(4), spd(WorkoutVariant::S400),  OFF, tmp(5),  easy(4), easy(8),  lng(8)},
+  {easy(4), spd(WorkoutVariant::S600),  OFF, tmp(5),  easy(4), easy(6),  lng(10)},
+  {easy(6), spd(WorkoutVariant::S800),  OFF, tmp(5),  easy(5), easy(6),  lng(10)},
+  {easy(5), spd(WorkoutVariant::S1K),   OFF, tmp(8),  easy(6), easy(5),  lng(15)},
   {easy(7), spd(WorkoutVariant::S1200), OFF, tmp(8),  easy(5), easy(8),  lng(10)},
   // Week 11-17: strength + tempo
   {easy(5), str(WorkoutVariant::STR_1MI),  OFF, tmp(8),  easy(5), easy(8),  lng(16)},
-  {easy(0), str(WorkoutVariant::STR_15MI), OFF, tmp(9),  easy(5), easy(8),  lng(10)},
-  {easy(0), str(WorkoutVariant::STR_2MI),  OFF, tmp(9),  easy(6), easy(6),  lng(16)},
-  {easy(0), str(WorkoutVariant::STR_3MI),  OFF, tmp(9),  easy(5), easy(8),  lng(10)},
-  {easy(0), str(WorkoutVariant::STR_2MI),  OFF, tmp(10), easy(6), easy(6),  lng(16)},
-  {easy(0), str(WorkoutVariant::STR_15MI), OFF, tmp(10), easy(5), easy(8),  lng(10)},
-  {easy(0), str(WorkoutVariant::STR_1MI),  OFF, tmp(10), easy(6), easy(6),  easy(8)},
+  {easy(5), str(WorkoutVariant::STR_15MI), OFF, tmp(9),  easy(5), easy(8),  lng(10)},
+  {easy(7), str(WorkoutVariant::STR_2MI),  OFF, tmp(9),  easy(6), easy(6),  lng(16)},
+  {easy(5), str(WorkoutVariant::STR_3MI),  OFF, tmp(9),  easy(5), easy(8),  lng(10)},
+  {easy(7), str(WorkoutVariant::STR_2MI),  OFF, tmp(10), easy(6), easy(6),  lng(16)},
+  {easy(5), str(WorkoutVariant::STR_15MI), OFF, tmp(10), easy(5), easy(8),  lng(10)},
+  {easy(7), str(WorkoutVariant::STR_1MI),  OFF, tmp(10), easy(6), easy(6),  easy(8)},
   // Week 18: taper + race
-  {easy(0), OFF, OFF, easy(6), easy(5), easy(3), RACE},
+  {easy(5), easy(5), OFF, easy(6), easy(5), easy(3), RACE},
 };
 
 // Advanced: 18 weeks
