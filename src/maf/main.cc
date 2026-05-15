@@ -76,10 +76,11 @@ static WorkoutData build_maf_workout(int age, int laps,
 }
 
 int main(int argc, char* argv[]) {
-    int age        = 50;
-    int laps       = 0;   // 0 = MAF run (single step); set by --test or --laps
-    int distance_m = 0;
-    int duration_s = 0;
+    int  age        = 50;
+    bool test_mode  = false;
+    int  laps       = 0;
+    int  distance_m = 0;
+    int  duration_s = 0;
     std::string tcx_file;
     std::string json_file;
 
@@ -89,7 +90,7 @@ int main(int argc, char* argv[]) {
         } else if (!strcmp(argv[i], "--age") && i+1 < argc) {
             age = std::stoi(argv[++i]);
         } else if (!strcmp(argv[i], "--test")) {
-            if (laps == 0) laps = 3;
+            test_mode = true;
         } else if (!strcmp(argv[i], "--laps") && i+1 < argc) {
             laps = std::stoi(argv[++i]);
         } else if (!strcmp(argv[i], "--distance") && i+1 < argc) {
@@ -106,6 +107,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (laps > 0 && !test_mode) {
+        fprintf(stderr, "error: --laps requires --test\n");
+        return 1;
+    }
     if (distance_m > 0 && duration_s > 0) {
         fprintf(stderr, "error: specify at most one of --distance or --duration\n");
         return 1;
@@ -114,6 +119,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "error: --laps must be >= 1\n");
         return 1;
     }
+    if (test_mode && laps == 0) laps = 3;
 
     // Resolve run step duration
     uint8_t  run_dur_type;
@@ -124,18 +130,15 @@ int main(int argc, char* argv[]) {
     } else if (distance_m > 0) {
         run_dur_type = kDurDist;
         run_dur_val  = static_cast<uint32_t>(distance_m) * 100u;
-    } else if (laps > 0) {
-        // test mode default: 1 mile per lap
+    } else if (test_mode) {
         run_dur_type = kDurDist;
-        run_dur_val  = 1609u * 100u;
+        run_dur_val  = 1609u * 100u;  // default 1 mile per lap
     } else {
-        // MAF run default: lap-button press
         run_dur_type = kDurOpen;
-        run_dur_val  = 0;
+        run_dur_val  = 0;             // lap-button press
     }
 
-    // Single run step for plain MAF run
-    const int effective_laps = (laps > 0) ? laps : 1;
+    const int effective_laps = test_mode ? laps : 1;
 
     const int maf_hr = 180 - age;
     if (laps > 0)
