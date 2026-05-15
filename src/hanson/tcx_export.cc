@@ -117,8 +117,8 @@ static void for_each_sos(const TrainingPlan& plan, int age,
                 day.kind != DayKind::STRENGTH &&
                 day.kind != DayKind::TEMPO) continue;
             if (day.steps.empty()) continue;
-            char nbuf[16];
-            snprintf(nbuf, sizeof(nbuf), "%s-w%02d-%s", prog, week.week, kDayTag[d]);
+            char nbuf[32];
+            snprintf(nbuf, sizeof(nbuf), "hanson-%s-w%02d-%s", prog, week.week, kDayTag[d]);
             fn(build_workout(day, nbuf, maf_hr), week.week, d);
         }
     }

@@ -118,7 +118,7 @@ static void for_each_kr(const TrainingPlan& plan, int age,
         }};
         for (const auto& kr : krs) {
             if (kr.steps->empty()) continue;
-            std::string name = plan.distance + "-w" + std::to_string(week.week)
+            std::string name = "first-" + plan.distance + "-w" + std::to_string(week.week)
                              + "-" + kr.tag;
             fn(build_workout(*kr.steps, name, maf_hr), week.week, kr.tag);
         }
