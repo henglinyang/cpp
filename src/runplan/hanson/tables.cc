@@ -48,7 +48,10 @@ static const int kT35[][10] = {
     {7800, 3750, 395, 369, 343, 328, 297, 287, 273, 262},
 };
 
-// kR400: 28 rows × 3 cols
+// kR400: 28 rows × 3 cols (only first 26 rows used; last 2 overlap with kR600)
+// col 0: 5K race time (sec, ascending) — lookup key
+// col 1: 10K race time (sec) — reference, not used in interpolation
+// col 2: 400m repeat time (sec) — output
 static const int kR400[][3] = {
     {930, 1950, 75},
     {960, 2015, 78},
@@ -80,7 +83,10 @@ static const int kR400[][3] = {
     {960, 2015, 115},
 };
 
-// kR600: 28 rows × 3 cols
+// kR600: 28 rows × 3 cols (only first 26 rows used; last 2 overlap with kR800)
+// col 0: 5K race time (sec, ascending) — lookup key
+// col 1: 10K race time (sec) — reference, not used in interpolation
+// col 2: 600m repeat time (sec) — output
 static const int kR600[][3] = {
     {930, 1950, 112},
     {960, 2015, 115},
@@ -112,7 +118,10 @@ static const int kR600[][3] = {
     {960, 2015, 155},
 };
 
-// kR800: 28 rows × 3 cols
+// kR800: 28 rows × 3 cols (only first 26 rows used; last 2 overlap with kR1K)
+// col 0: 5K race time (sec, ascending) — lookup key
+// col 1: 10K race time (sec) — reference, not used in interpolation
+// col 2: 800m repeat time (sec) — output
 static const int kR800[][3] = {
     {930, 1950, 150},
     {960, 2015, 155},
@@ -144,7 +153,10 @@ static const int kR800[][3] = {
     {960, 2015, 192},
 };
 
-// kR1K: 28 rows × 3 cols
+// kR1K: 28 rows × 3 cols (only first 26 rows used; last 2 overlap with kR1200)
+// col 0: 5K race time (sec, ascending) — lookup key
+// col 1: 10K race time (sec) — reference, not used in interpolation
+// col 2: 1000m repeat time (sec) — output
 static const int kR1K[][3] = {
     {930, 1950, 186},
     {960, 2015, 192},
@@ -176,7 +188,10 @@ static const int kR1K[][3] = {
     {960, 2015, 230},
 };
 
-// kR1200: 28 rows × 3 cols
+// kR1200: 28 rows × 3 cols (only first 26 rows used; last 2 overlap with kR1600)
+// col 0: 5K race time (sec, ascending) — lookup key
+// col 1: 10K race time (sec) — reference, not used in interpolation
+// col 2: 1200m repeat time (sec) — output
 static const int kR1200[][3] = {
     {930, 1950, 222},
     {960, 2015, 230},
@@ -208,7 +223,10 @@ static const int kR1200[][3] = {
     {150, 222, 300},
 };
 
-// kR1600: 28 rows × 3 cols
+// kR1600: 28 rows × 3 cols (only first 26 rows used)
+// col 0: 5K race time (sec, ascending) — lookup key
+// col 1: 10K race time (sec) — reference, not used in interpolation
+// col 2: 1600m repeat time (sec) — output
 static const int kR1600[][3] = {
     {930, 1950, 300},
     {960, 2015, 310},
@@ -240,7 +258,13 @@ static const int kR1600[][3] = {
     {9180, 4590, 340},
 };
 
-// kLADDER: 28 rows × 6 cols
+// kLADDER: 28 rows × 6 cols (not used by lookup_paces; individual kR* tables used instead)
+// col 0: 5K race time (sec, ascending) — lookup key
+// col 1: 10K race time (sec) — reference
+// col 2: 400m repeat time (sec)
+// col 3: 800m repeat time (sec)
+// col 4: 1200m repeat time (sec)
+// col 5: 1600m repeat time (sec)
 static const int kLADDER[][6] = {
     {930, 1950, 75, 150, 222, 300},
     {960, 2015, 78, 155, 230, 310},
@@ -273,6 +297,9 @@ static const int kLADDER[][6] = {
 };
 
 // kS1MI: 33 rows × 3 cols
+// col 0: marathon goal time (sec, ascending) — lookup key
+// col 1: half-marathon goal time (sec) — reference, not used in interpolation
+// col 2: 1-mile strength repeat time (sec) — output
 static const int kS1MI[][3] = {
     {8880, 4440, 330},
     {9180, 4590, 340},
@@ -310,6 +337,9 @@ static const int kS1MI[][3] = {
 };
 
 // kS15MI: 33 rows × 3 cols
+// col 0: marathon goal time (sec, ascending) — lookup key
+// col 1: half-marathon goal time (sec) — reference, not used in interpolation
+// col 2: 1.5-mile strength repeat time (sec) — output
 static const int kS15MI[][3] = {
     {8880, 4440, 495},
     {9180, 4590, 510},
@@ -346,7 +376,10 @@ static const int kS15MI[][3] = {
     {17280, 8640, 975},
 };
 
-// kS2MI: 33 rows × 3 cols
+// kS2MI: 33 rows × 3 cols (only first 20 rows used; data beyond row 19 is garbled)
+// col 0: marathon goal time (sec, ascending) — lookup key
+// col 1: half-marathon goal time (sec) — reference, not used in interpolation
+// col 2: 2-mile strength repeat time (sec) — output
 static const int kS2MI[][3] = {
     {8880, 4440, 660},
     {9180, 4590, 680},
@@ -384,6 +417,9 @@ static const int kS2MI[][3] = {
 };
 
 // kS3MI: 33 rows × 3 cols
+// col 0: marathon goal time (sec, ascending) — lookup key
+// col 1: half-marathon goal time (sec) — reference, not used in interpolation
+// col 2: 3-mile strength repeat time (sec) — output
 static const int kS3MI[][3] = {
     {8880, 4440, 990},
     {9180, 4590, 1020},
@@ -420,7 +456,10 @@ static const int kS3MI[][3] = {
     {17280, 8640, 1950},
 };
 
-// kTEMPO: 27 rows × 3 cols
+// kTEMPO: 27 rows × 3 cols (not used by lookup_paces; tempo is read from kT35 col 6)
+// col 0: marathon goal time (sec, descending) — lookup key
+// col 1: half-marathon goal time (sec) — reference
+// col 2: tempo / marathon goal pace (sec/mile) — output
 static const int kTEMPO[][3] = {
     {18000, 8640, 687},
     {17100, 8220, 652},
