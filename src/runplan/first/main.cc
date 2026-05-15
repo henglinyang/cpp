@@ -9,7 +9,7 @@ static void usage(const char* argv0) {
     fprintf(stderr,
         "Usage: %s [options]\n\n"
         "Options:\n"
-        "  --distance <5k|10k|half|marathon>   (default: marathon)\n"
+        "  --distance <5k|10k|half|marathon|full>   (default: marathon)\n"
         "  --goal <H:MM:SS or M:SS>             goal finish time (default: 3:15:00)\n"
         "  --tcx <dir>                          export workouts as TCX files into dir\n"
         "  --json <dir>                         export workouts as Garmin JSON files into dir\n"
@@ -52,9 +52,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (distance == "full") distance = "marathon";
     if (distance != "5k" && distance != "10k" &&
         distance != "half" && distance != "marathon") {
-        fprintf(stderr, "invalid distance: %s (must be 5k, 10k, half, marathon)\n",
+        fprintf(stderr, "invalid distance: %s (must be 5k, 10k, half, marathon, full)\n",
                 distance.c_str());
         return 1;
     }

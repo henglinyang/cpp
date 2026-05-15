@@ -232,7 +232,7 @@ static void usage_first(const char* prog) {
         "Generate a FIRST (Furman Institute) training plan.\n"
         "\n"
         "Options:\n"
-        "  --distance <5k|10k|half|marathon>   (default: marathon)\n"
+        "  --distance <5k|10k|half|marathon|full>   (default: marathon)\n"
         "  --goal <H:MM:SS or M:SS>             Goal finish time (default: 3:15:00)\n"
         "  --tcx <dir>                          Export workouts as TCX files\n"
         "  --json <dir>                         Export workouts as Garmin JSON files\n"
@@ -273,9 +273,10 @@ static int cmd_first(const char* prog, int argc, char* argv[]) {
         }
     }
 
+    if (distance == "full") distance = "marathon";
     if (distance != "5k" && distance != "10k" &&
         distance != "half" && distance != "marathon") {
-        fprintf(stderr, "invalid distance: %s (must be 5k, 10k, half, marathon)\n",
+        fprintf(stderr, "invalid distance: %s (must be 5k, 10k, half, marathon, full)\n",
                 distance.c_str());
         return 1;
     }
