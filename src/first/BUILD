@@ -12,6 +12,7 @@ cc_library(
     name = "first_tcx_lib",
     srcs = ["tcx_export.cc"],
     hdrs = ["tcx_export.h"],
+    visibility = ["//visibility:public"],
     deps = [
         ":first_lib",
         "//src/fit2tcx:fit2tcx_lib",
