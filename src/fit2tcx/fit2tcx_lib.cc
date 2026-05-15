@@ -309,6 +309,10 @@ static void writeExecStep(std::ostream& out, const WorkoutStepData& step,
         out << "\"endCondition\":{\"conditionTypeId\":2,\"conditionTypeKey\":\"time\","
             <<   "\"displayOrder\":2,\"displayable\":true},"
             << "\"endConditionValue\":" << jsonDbl(step.duration_value / 1000.0) << ",";
+    } else if (step.duration_type == FIT_WKT_STEP_DURATION_OPEN) {
+        out << "\"endCondition\":{\"conditionTypeId\":1,\"conditionTypeKey\":\"lap.button\","
+            <<   "\"displayOrder\":1,\"displayable\":true},"
+            << "\"endConditionValue\":null,";
     } else {
         out << "\"endCondition\":{\"conditionTypeId\":3,\"conditionTypeKey\":\"distance\","
             <<   "\"displayOrder\":3,\"displayable\":true},"
