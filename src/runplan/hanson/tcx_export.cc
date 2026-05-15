@@ -106,16 +106,14 @@ static WorkoutData build_workout(const DayPlan& day, const char* name, int maf_h
     return wkt;
 }
 
-static void for_each_sos(const TrainingPlan& plan, int age,
-                         std::function<void(const WorkoutData&, int week, int day)> fn) {
+static void for_each_workout(const TrainingPlan& plan, int age,
+                              std::function<void(const WorkoutData&, int week, int day)> fn) {
     const int maf_hr = 180 - age;
     const char* prog = plan.program == Program::BEGINNER ? "beg" : "adv";
     for (const auto& week : plan.weeks) {
         for (int d = 0; d < 7; d++) {
             const DayPlan& day = week.days[d];
-            if (day.kind != DayKind::SPEED &&
-                day.kind != DayKind::STRENGTH &&
-                day.kind != DayKind::TEMPO) continue;
+            if (day.kind == DayKind::OFF || day.kind == DayKind::RACE) continue;
             if (day.steps.empty()) continue;
             char nbuf[32];
             snprintf(nbuf, sizeof(nbuf), "hanson-%s-w%02d-%s", prog, week.week, kDayTag[d]);
@@ -125,7 +123,7 @@ static void for_each_sos(const TrainingPlan& plan, int age,
 }
 
 static void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outdir, int age) {
-    for_each_sos(plan, age, [&](const WorkoutData& wkt, int week, int d) {
+    for_each_workout(plan, age, [&](const WorkoutData& wkt, int week, int d) {
         char path[128];
         snprintf(path, sizeof(path), "%s/week_%02d_%s.tcx",
                  outdir.c_str(), week, kDayTag[d]);
@@ -136,7 +134,7 @@ static void export_plan_to_tcx(const TrainingPlan& plan, const std::string& outd
 }
 
 static void export_plan_to_json(const TrainingPlan& plan, const std::string& outdir, int age) {
-    for_each_sos(plan, age, [&](const WorkoutData& wkt, int week, int d) {
+    for_each_workout(plan, age, [&](const WorkoutData& wkt, int week, int d) {
         char path[128];
         snprintf(path, sizeof(path), "%s/week_%02d_%s.json",
                  outdir.c_str(), week, kDayTag[d]);
