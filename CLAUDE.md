@@ -47,6 +47,9 @@ Generates a 16-week training plan for 5k/10k/half/marathon with three Key Runs (
 
 CLI: `--distance <5k|10k|half|marathon> --goal <time> --tcx <dir> --json <dir> --age <N>`
 
+### `src/maf` — MAF warmup/cooldown library
+Shared library used by both `hanson_tcx_lib` and `first_tcx_lib`. Provides `push_maf_warmup()` and `push_maf_cooldown()`, each appending 5 equal-duration `WorkoutStepData` steps with progressively increasing (warmup) or decreasing (cooldown) HR ranges. The range walks between a fixed floor of 90 BPM and `maf_hr = 180 - age`. Depends on `//src/fit2tcx:workout_data` only — not on `fit2tcx_lib`, so it does not pull in the FIT SDK or pugixml.
+
 ### `src/btcwallet` — Bitcoin key pair generator
 Generates ECDSA/Schnorr key pairs with optional BIP32 HD derivation. Uses vendored `third_party/secp256k1`. Crypto helpers (SHA256, RIPEMD160, HMAC-SHA512, Base58Check, Bech32/Bech32m) are implemented inline in `crypto.cc`.
 
@@ -82,4 +85,4 @@ All test files use a self-contained harness (no external test framework). Patter
 | `bazel/libxml2/` | libxml2 local override module |
 
 ## MAF heart rate
-Warmup and cooldown steps use the MAF formula: `maf_hr = 180 - age`. In JSON export this maps to `workoutTargetTypeId=4` (`heart.rate.zone`) with `targetValueOne=maf_hr` (ceiling) and `targetValueTwo=0` (no floor). In TCX export it maps to `HeartRate` / `SingleValue` target.
+`maf_hr = 180 - age`. Warmup (15 min) and cooldown (10 min) are each split into 5 equal steps via `src/maf`. HR ranges walk from `[90, 90+delta]` up to `[maf_hr-delta, maf_hr]` for warmup, and the reverse for cooldown, where `delta = (maf_hr - 90) / 5`. Both `targetValueOne` (high) and `targetValueTwo` (low) are emitted in JSON (`workoutTargetTypeId=4`, `heart.rate.zone`); both `<Low>` and `<High>` are written in TCX.
