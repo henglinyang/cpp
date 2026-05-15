@@ -296,7 +296,7 @@ static const int kLADDER[][6] = {
     {990, 2080, 320, 1020, 2145, 330},
 };
 
-// kS1MI: 33 rows × 3 cols
+// kS1MI: 36 rows × 3 cols
 // col 0: marathon goal time (sec, ascending) — lookup key
 // col 1: half-marathon goal time (sec) — reference, not used in interpolation
 // col 2: 1-mile strength repeat time (sec) — output
@@ -334,9 +334,12 @@ static const int kS1MI[][3] = {
     {16740, 8370, 630},
     {17040, 8190, 640},
     {17280, 8640, 650},
+    {17580, 8790, 660},
+    {17820, 8910, 670},
+    {18060, 9030, 680},
 };
 
-// kS15MI: 33 rows × 3 cols
+// kS15MI: 36 rows × 3 cols
 // col 0: marathon goal time (sec, ascending) — lookup key
 // col 1: half-marathon goal time (sec) — reference, not used in interpolation
 // col 2: 1.5-mile strength repeat time (sec) — output
@@ -374,9 +377,12 @@ static const int kS15MI[][3] = {
     {16740, 8370, 945},
     {17040, 8190, 960},
     {17280, 8640, 975},
+    {17580, 8790, 990},
+    {17820, 8910, 1005},
+    {18060, 9030, 1020},
 };
 
-// kS2MI: 33 rows × 3 cols (only first 20 rows used; data beyond row 19 is garbled)
+// kS2MI: 36 rows × 3 cols (only first 20 rows used)
 // col 0: marathon goal time (sec, ascending) — lookup key
 // col 1: half-marathon goal time (sec) — reference, not used in interpolation
 // col 2: 2-mile strength repeat time (sec) — output
@@ -401,22 +407,25 @@ static const int kS2MI[][3] = {
     {13380, 6690, 1000},
     {13620, 6810, 1020},
     {13860, 6930, 1040},
-    {14160, 1060, 14400},
-    {7200, 1080, 14640},
-    {7320, 1100, 14940},
-    {7470, 1120, 15180},
-    {7590, 1140, 15480},
-    {7740, 1160, 15720},
-    {7860, 1180, 15960},
-    {7980, 1200, 16260},
-    {8130, 1220, 16500},
-    {8250, 1240, 16740},
-    {8370, 1260, 17040},
-    {8190, 1280, 17280},
-    {8640, 1300, 17580},
+    {14160, 7080, 1060},
+    {14400, 7200, 1080},
+    {14640, 7320, 1100},
+    {14940, 7470, 1120},
+    {15180, 7590, 1140},
+    {15480, 7740, 1160},
+    {15720, 7860, 1180},
+    {15960, 7980, 1200},
+    {16260, 8130, 1220},
+    {16500, 8250, 1240},
+    {16740, 8370, 1260},
+    {17040, 8190, 1280},
+    {17280, 8640, 1300},
+    {17580, 8790, 1320},
+    {17820, 8910, 1340},
+    {18060, 9030, 1360},
 };
 
-// kS3MI: 33 rows × 3 cols
+// kS3MI: 36 rows × 3 cols
 // col 0: marathon goal time (sec, ascending) — lookup key
 // col 1: half-marathon goal time (sec) — reference, not used in interpolation
 // col 2: 3-mile strength repeat time (sec) — output
@@ -454,6 +463,9 @@ static const int kS3MI[][3] = {
     {16740, 8370, 1890},
     {17040, 8190, 1920},
     {17280, 8640, 1950},
+    {17580, 8790, 1980},
+    {17820, 8910, 2010},
+    {18060, 9030, 2040},
 };
 
 // kTEMPO: 27 rows × 3 cols (not used by lookup_paces; tempo is read from kT35 col 6)
