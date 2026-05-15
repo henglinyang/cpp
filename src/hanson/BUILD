@@ -14,6 +14,7 @@ cc_library(
     deps = [
         ":hanson_lib",
         "//src/fit2tcx:fit2tcx_lib",
+        "//src/maf:maf_lib",
     ],
 )
 

@@ -1,5 +1,6 @@
 #include "tcx_export.h"
 #include "src/fit2tcx/fit2tcx.h"
+#include "src/maf/maf.h"
 
 #include <array>
 #include <fstream>
@@ -36,21 +37,6 @@ static bool is_uniform_interval(const std::vector<PlanStep>& steps) {
     return true;
 }
 
-static WorkoutStepData make_maf_step(uint16_t idx, uint32_t seconds,
-                                     uint8_t intensity, int maf_hr,
-                                     const char* name) {
-    WorkoutStepData s;
-    s.step_index    = idx;
-    s.duration_type  = kDurTime;
-    s.duration_value = seconds * 1000u;
-    s.intensity      = intensity;
-    s.target_type    = kTgtHr;
-    s.has_target_high = true;
-    s.target_high     = static_cast<uint32_t>(maf_hr);
-    s.has_name = true;
-    s.name     = name;
-    return s;
-}
 
 static WorkoutStepData plan_step_to_workout(const PlanStep& ps, uint16_t idx) {
     WorkoutStepData s;
@@ -98,7 +84,7 @@ static WorkoutData build_workout(const std::vector<PlanStep>& ps_list,
     wkt.name      = name;
 
     uint16_t idx = 0;
-    wkt.steps.push_back(make_maf_step(idx++, 900, kInWarmup, maf_hr, "MAF Warmup"));
+    push_maf_warmup(wkt, idx, 900, maf_hr);
 
     if (is_uniform_interval(ps_list)) {
         uint32_t reps = static_cast<uint32_t>(ps_list.size() / 2);
@@ -116,7 +102,7 @@ static WorkoutData build_workout(const std::vector<PlanStep>& ps_list,
             wkt.steps.push_back(plan_step_to_workout(ps, idx++));
     }
 
-    wkt.steps.push_back(make_maf_step(idx++, 600, kInCooldown, maf_hr, "MAF Cooldown"));
+    push_maf_cooldown(wkt, idx, 600, maf_hr);
     return wkt;
 }
 
