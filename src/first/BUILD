@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 cc_library(
     name = "first_lib",
@@ -21,6 +21,16 @@ cc_library(
 cc_binary(
     name = "first",
     srcs = ["main.cc"],
+    copts = ["-std=c++20"],
+    deps = [
+        ":first_lib",
+        ":first_tcx_lib",
+    ],
+)
+
+cc_test(
+    name = "plan_test",
+    srcs = ["plan_test.cc"],
     copts = ["-std=c++20"],
     deps = [
         ":first_lib",

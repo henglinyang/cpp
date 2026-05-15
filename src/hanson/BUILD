@@ -1,4 +1,4 @@
-load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library", "cc_test")
 
 cc_library(
     name = "hanson_lib",
@@ -20,6 +20,15 @@ cc_library(
 cc_binary(
     name = "hanson",
     srcs = ["main.cc"],
+    deps = [
+        ":hanson_lib",
+        ":hanson_tcx_lib",
+    ],
+)
+
+cc_test(
+    name = "plan_test",
+    srcs = ["plan_test.cc"],
     deps = [
         ":hanson_lib",
         ":hanson_tcx_lib",
