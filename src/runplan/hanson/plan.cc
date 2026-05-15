@@ -26,7 +26,7 @@ static RawDay tmp(double mi) { return {DayKind::TEMPO, WorkoutVariant::NONE, mi}
 // Beginner: 18 weeks, cols = Mon,Tue,Wed,Thu,Fri,Sat,Sun
 static const Week7 kBeginner[18] = {
   // Week 1-5: base building (all easy)
-  {easy(0), OFF,       OFF, easy(3), OFF,    easy(3), easy(3)},
+  {easy(0), OFF,       OFF, easy(3), OFF,    easy(3), easy(4)},
   {OFF,     OFF,       OFF, easy(2), OFF,    easy(3), easy(4)},
   {OFF,     OFF,       OFF, easy(4), OFF,    easy(4), easy(4)},
   {OFF,     OFF,       OFF, easy(5), OFF,    easy(4), easy(5)},
