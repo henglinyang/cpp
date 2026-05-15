@@ -323,6 +323,12 @@ static void writeExecStep(std::ostream& out, const WorkoutStepData& step,
             <<   "\"workoutTargetTypeKey\":\"pace.zone\",\"displayOrder\":6},"
             << "\"targetValueOne\":" << jsonDbl(step.target_high / 1000.0) << ","
             << "\"targetValueTwo\":" << jsonDbl(step.target_low  / 1000.0) << ",";
+    } else if (step.target_type == FIT_WKT_STEP_TARGET_HEART_RATE &&
+               (step.has_target_low || step.has_target_high)) {
+        out << "\"targetType\":{\"workoutTargetTypeId\":4,"
+            <<   "\"workoutTargetTypeKey\":\"heart.rate.zone\",\"displayOrder\":4},"
+            << "\"targetValueOne\":" << jsonDbl(step.has_target_high ? (double)step.target_high : 220.0) << ","
+            << "\"targetValueTwo\":" << jsonDbl(step.has_target_low  ? (double)step.target_low  : 0.0)   << ",";
     } else {
         out << "\"targetType\":{\"workoutTargetTypeId\":1,"
             <<   "\"workoutTargetTypeKey\":\"no.target\",\"displayOrder\":1},"
