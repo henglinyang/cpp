@@ -1,7 +1,7 @@
 #include "src/fit2tcx/fit2tcx.h"
-#include "src/first/plan.h"
-#include "src/hanson/plan.h"
-#include "src/maf/maf.h"
+#include "src/runplan/first/plan.h"
+#include "src/runplan/hanson/plan.h"
+#include "src/runplan/maf/maf.h"
 
 #include <cstdio>
 #include <cstring>

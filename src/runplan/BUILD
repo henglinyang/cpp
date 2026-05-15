@@ -5,8 +5,8 @@ cc_binary(
     srcs = ["main.cc"],
     deps = [
         "//src/fit2tcx:fit2tcx_lib",
-        "//src/first:first_tcx_lib",
-        "//src/hanson:hanson_tcx_lib",
-        "//src/maf:maf_lib",
+        "//src/runplan/first:first_tcx_lib",
+        "//src/runplan/hanson:hanson_tcx_lib",
+        "//src/runplan/maf:maf_lib",
     ],
 )

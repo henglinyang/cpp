@@ -1,6 +1,6 @@
 #include "plan.h"
 #include "src/fit2tcx/fit2tcx.h"
-#include "src/maf/maf.h"
+#include "src/runplan/maf/maf.h"
 
 #include <array>
 #include <fstream>
