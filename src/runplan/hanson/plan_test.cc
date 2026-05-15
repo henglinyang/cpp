@@ -185,15 +185,15 @@ TEST(GeneratePlan, TempoMiddleStepHasSpeedTarget) {
     EXPECT_GT(steps[1].speed_high_mms, 0);
 }
 
-// Advanced week 6 (weeks[5]) Wed (day 2) = Ladder (7 segments → 14 steps)
+// Advanced week 7 (weeks[6]) Tue (day 1) = Ladder (7 segments → 14 steps)
 TEST(GeneratePlan, LadderStepCount) {
     auto plan = hanson::generate_plan("3:15:00", hanson::Program::ADVANCED);
-    const auto& steps = plan.weeks[5].days[2].steps;
+    const auto& steps = plan.weeks[6].days[1].steps;
     EXPECT_EQ((int)steps.size(), 14);  // 7 segs × (run + recover)
 }
 TEST(GeneratePlan, LadderNotUniformDistances) {
     auto plan = hanson::generate_plan("3:15:00", hanson::Program::ADVANCED);
-    const auto& steps = plan.weeks[5].days[2].steps;
+    const auto& steps = plan.weeks[6].days[1].steps;
     // Run segments: 400, 800, 1200, 1600, 1200, 800, 400
     EXPECT_EQ(steps[0].duration_val,  400);
     EXPECT_EQ(steps[2].duration_val,  800);

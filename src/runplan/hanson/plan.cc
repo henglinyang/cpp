@@ -52,19 +52,19 @@ static const Week7 kBeginner[18] = {
 // Advanced: 18 weeks
 static const Week7 kAdvanced[18] = {
   // Week 1-2: speed only (no tempo yet)
-  {easy(6), spd(WorkoutVariant::S400),  OFF, easy(6),  easy(6), easy(6),  easy(8)},
-  {easy(6), spd(WorkoutVariant::S600),  OFF, easy(6),  easy(6), easy(6),  easy(8)},
+  {easy(0), easy(0),                    OFF, easy(6),  easy(6), easy(6), easy(8)},
+  {easy(6), spd(WorkoutVariant::S400),  OFF, easy(6),  easy(6), easy(6), easy(8)},
   // Week 3-10: speed + tempo
-  {easy(6), spd(WorkoutVariant::S800),  OFF, tmp(6),   easy(7), easy(6),  lng(10)},
-  {OFF,     easy(6), spd(WorkoutVariant::S1K),   tmp(6),  easy(6), easy(8),  easy(8)},
-  {easy(6), spd(WorkoutVariant::S1200), OFF, tmp(7),   easy(7), easy(6),  lng(12)},
-  {OFF,     easy(6), spd(WorkoutVariant::LADDER), tmp(7), easy(6), easy(10), easy(8)},
-  {easy(6), spd(WorkoutVariant::S1600), OFF, tmp(8),   easy(7), easy(8),  lng(14)},
-  {OFF,     easy(6), spd(WorkoutVariant::S800),  tmp(8),  easy(6), easy(10), easy(10)},
-  {easy(6), spd(WorkoutVariant::S1600), OFF, tmp(9),   easy(7), easy(8),  lng(15)},
-  {OFF,     easy(6), spd(WorkoutVariant::S1200), tmp(9),  easy(6), easy(10), easy(10)},
+  {easy(6), spd(WorkoutVariant::S600),   OFF, tmp(6), easy(7), easy(6),  lng(10)},
+  {easy(6), spd(WorkoutVariant::S800),   OFF, tmp(6), easy(6), easy(8),  easy(8)},
+  {easy(6), spd(WorkoutVariant::S1K),    OFF, tmp(6), easy(7), easy(6),  lng(12)},
+  {easy(6), spd(WorkoutVariant::S1200),  OFF, tmp(7), easy(6), easy(10), easy(8)},
+  {easy(6), spd(WorkoutVariant::LADDER), OFF, tmp(7), easy(7), easy(8),  lng(14)},
+  {easy(6), spd(WorkoutVariant::S1600),  OFF, tmp(7), easy(6), easy(10), easy(10)},
+  {easy(8), spd(WorkoutVariant::S800),   OFF, tmp(8), easy(7), easy(8),  lng(15)},
+  {easy(6), spd(WorkoutVariant::S1600),  OFF, tmp(8), easy(6), easy(10), easy(10)},
   // Week 11-17: strength + tempo
-  {easy(6), str(WorkoutVariant::STR_1MI),  OFF, tmp(9),   easy(7), easy(8),  lng(16)},
+  {easy(8), str(WorkoutVariant::STR_1MI),  OFF, tmp(8),   easy(7), easy(8),  lng(16)},
   {easy(6), str(WorkoutVariant::STR_15MI), OFF, tmp(9),   easy(6), easy(10), easy(10)},
   {easy(8), str(WorkoutVariant::STR_2MI),  OFF, tmp(9),   easy(7), easy(8),  lng(16)},
   {easy(6), str(WorkoutVariant::STR_3MI),  OFF, tmp(9),   easy(6), easy(10), easy(10)},
@@ -72,7 +72,7 @@ static const Week7 kAdvanced[18] = {
   {easy(6), str(WorkoutVariant::STR_15MI), OFF, tmp(10),  easy(6), easy(10), easy(10)},
   {easy(8), str(WorkoutVariant::STR_1MI),  OFF, tmp(10),  easy(7), easy(8),  easy(8)},
   // Week 18: taper
-  {easy(6), OFF, OFF, easy(5), easy(6), easy(3), RACE},
+  {easy(6), easy(5), OFF, easy(6), easy(6), easy(3), RACE},
 };
 
 // ── step builders ─────────────────────────────────────────────────────────
