@@ -20,6 +20,8 @@ bazelisk test //src/runplan/hanson:plan_test --test_output=all
 bazelisk test //... --test_output=all
 
 # Run a compiled binary
+./bazel-bin/src/runplan/runplan pace 3:30:00
+./bazel-bin/src/runplan/runplan pace half 1:45:00
 ./bazel-bin/src/runplan/runplan hanson --goal 3:30:00 --json /tmp/json --age 40
 ./bazel-bin/src/runplan/runplan first --distance marathon --goal 3:15:00 --age 40
 ./bazel-bin/src/runplan/runplan maf --age 40 --test
@@ -30,16 +32,23 @@ No `cmake`, `make`, or compiler flags need to be set manually. `MODULE.bazel` de
 ## Projects
 
 ### `src/runplan` — unified running plan tool
-Single binary (`runplan`) with three subcommands. Source is organized as:
+Single binary (`runplan`) with four subcommands. Source is organized as:
 
 ```
 src/runplan/
-├── main.cc          ← subcommand dispatcher
+├── main.cc          ← subcommand dispatcher (pace logic is inline here)
 ├── BUILD
 ├── maf/             ← MAF warmup/cooldown library + MafWorkout class
 ├── hanson/          ← Hansons Marathon Method plan generator
 └── first/           ← FIRST plan generator
 ```
+
+#### `runplan pace`
+Converts a race result to equivalent paces and projected times. Takes a distance + time (or just a marathon time) and prints: GPS pace/mi, exact pace/mi, projected full/10k/5k/1500m/1000m. GPS pace adjusts by ×1.02 for GPS over-measurement. All logic is inline in `main.cc` with no external deps.
+
+Distances: `full` (42195m), `half`, `mile`/`pace` (1609.34m), `k5`/`K5` (1500m), `km` (1000m), `<N>k`/`<N>K` (km), `<N>M` (miles), `<N>m` (meters).
+
+Options: `runplan pace <time>` or `runplan pace <distance> <time>`
 
 #### `runplan maf`
 Generates a MAF workout: 15-min warmup + run steps + 10-min cooldown. Entry point `MafWorkout(age, laps, dur_type, dur_val)` builds a `WorkoutData`. Options: `--age`, `--distance`, `--duration`, `--test`, `--laps`, `--tcx`, `--json`.
@@ -47,12 +56,12 @@ Generates a MAF workout: 15-min warmup + run steps + 10-min cooldown. Entry poin
 #### `runplan hanson`
 Generates an 18-week Hansons marathon plan (beginner or advanced). SOS workouts have structured `PlanStep` arrays exported via `tcx_export.cc`. `hanson::Plan(goal, Program)` wraps `generate_plan()` and provides `exportTcx/Json(dir, age)`.
 
-Plan structure: `TrainingPlan → WeekPlan[] → DayPlan[] → PlanStep[]`. Days 0–6 = Mon–Sun. Steps have `kind` (RUN/RECOVER/WARMUP/COOLDOWN), `duration_val` (meters or seconds), `dist_based` flag, `speed_low_mms`/`speed_high_mms` (mm/s).
+Plan structure: `TrainingPlan → WeekPlan[] → DayPlan[] → PlanStep[]`. Days 0–6 = Mon–Sun. Steps have `kind` (RUN/RECOVER/WARMUP/COOLDOWN), `duration_val` (meters or seconds), `dist_based` flag, `speed_low_mms`/`speed_high_mms` (mm/s). Long runs (`DayKind::LONG`) are exported without MAF warmup/cooldown.
 
 Options: `--program <beginner|advanced> --goal <H:MM:SS> --tcx <dir> --json <dir> --age <N>`
 
 #### `runplan first`
-Generates a FIRST (Furman Institute) plan for 5k/10k/half/marathon with three Key Runs (KR1/KR2/KR3) per week. `first::Plan(goal, distance)` wraps `generate_plan()`. Weeks count down (week 16 first, week 1 = race week).
+Generates a FIRST (Furman Institute) plan for 5k/10k/half/marathon with three Key Runs (KR1/KR2/KR3) per week. `first::Plan(goal, distance)` wraps `generate_plan()`. Weeks count down (week 16 first, week 1 = race week). KR3 (long run) is exported without MAF warmup/cooldown.
 
 Options: `--distance <5k|10k|half|marathon> --goal <time> --tcx <dir> --json <dir> --age <N>`
 
