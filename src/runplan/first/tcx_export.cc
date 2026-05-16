@@ -76,7 +76,7 @@ static WorkoutStepData plan_step_to_workout(const PlanStep& ps, uint16_t idx) {
 }
 
 static WorkoutData build_workout(const std::vector<PlanStep>& ps_list,
-                                  const std::string& name, int maf_hr) {
+                                  const std::string& name, int maf_hr, bool is_long) {
     WorkoutData wkt;
     wkt.has_sport = true;
     wkt.sport     = kSportRunning;
@@ -84,7 +84,7 @@ static WorkoutData build_workout(const std::vector<PlanStep>& ps_list,
     wkt.name      = name;
 
     uint16_t idx = 0;
-    push_maf_warmup(wkt, idx, 900, maf_hr);
+    if (!is_long) push_maf_warmup(wkt, idx, 900, maf_hr);
 
     if (is_uniform_interval(ps_list)) {
         uint32_t reps = static_cast<uint32_t>(ps_list.size() / 2);
@@ -102,7 +102,7 @@ static WorkoutData build_workout(const std::vector<PlanStep>& ps_list,
             wkt.steps.push_back(plan_step_to_workout(ps, idx++));
     }
 
-    push_maf_cooldown(wkt, idx, 600, maf_hr);
+    if (!is_long) push_maf_cooldown(wkt, idx, 600, maf_hr);
     return wkt;
 }
 
@@ -120,7 +120,7 @@ static void for_each_kr(const TrainingPlan& plan, int age,
             if (kr.steps->empty()) continue;
             std::string name = "first-" + plan.distance + "-w" + std::to_string(week.week)
                              + "-" + kr.tag;
-            fn(build_workout(*kr.steps, name, maf_hr), week.week, kr.tag);
+            fn(build_workout(*kr.steps, name, maf_hr, kr.tag == std::string("kr3")), week.week, kr.tag);
         }
     }
 }

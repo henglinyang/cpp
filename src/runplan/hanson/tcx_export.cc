@@ -83,8 +83,9 @@ static WorkoutData build_workout(const DayPlan& day, const char* name, int maf_h
     wkt.has_name  = true;
     wkt.name      = name;
 
+    const bool is_long = (day.kind == DayKind::LONG);
     uint16_t idx = 0;
-    push_maf_warmup(wkt, idx, 900, maf_hr);
+    if (!is_long) push_maf_warmup(wkt, idx, 900, maf_hr);
 
     if (is_uniform_interval(day.steps)) {
         uint32_t reps = static_cast<uint32_t>(day.steps.size() / 2);
@@ -102,7 +103,7 @@ static WorkoutData build_workout(const DayPlan& day, const char* name, int maf_h
             wkt.steps.push_back(plan_step_to_wsd(ps, idx++));
     }
 
-    push_maf_cooldown(wkt, idx, 600, maf_hr);
+    if (!is_long) push_maf_cooldown(wkt, idx, 600, maf_hr);
     return wkt;
 }
 
