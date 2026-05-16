@@ -25,6 +25,7 @@ static void usage_top(const char* prog) {
         "  maf      Generate a MAF workout (15-min warmup + run + 10-min cooldown)\n"
         "  hanson   Generate an 18-week Hansons marathon training plan\n"
         "  first    Generate a FIRST training plan (5k/10k/half/marathon)\n"
+        "  pace     Convert a race result to equivalent paces and times\n"
         "\n"
         "Run '%s <command> --help' for command-specific options.\n",
         prog, prog);
@@ -292,6 +293,93 @@ static int cmd_first(const char* prog, int argc, char* argv[]) {
     return 0;
 }
 
+// ---- pace ------------------------------------------------------------------
+
+static double pace_parse_dist(const std::string& d) {
+    static const double kMarathon = 42195.0;
+    static const double kMile     = 1609.34;
+    if (d == "full")                    return kMarathon;
+    if (d == "half")                    return kMarathon / 2.0;
+    if (d == "mile" || d == "pace")     return kMile;
+    if (d == "k5"   || d == "K5")       return 1500.0;
+    if (d == "km"   || d == "Km")       return 1000.0;
+    if (!d.empty() && d.back() == 'M')  return std::stod(d.substr(0, d.size()-1)) * kMile;
+    if (!d.empty() && (d.back() == 'k' || d.back() == 'K'))
+                                        return std::stod(d.substr(0, d.size()-1)) * 1000.0;
+    if (!d.empty() && d.back() == 'm')  return std::stod(d.substr(0, d.size()-1));
+    return std::stod(d);
+}
+
+static int pace_parse_time(const std::string& t) {
+    int a = 0, b = 0, c = 0;
+    int cnt = 0;
+    for (char ch : t) if (ch == ':') cnt++;
+    if (cnt == 1) { sscanf(t.c_str(), "%d:%d", &a, &b); return a * 60 + b; }
+    if (cnt == 2) { sscanf(t.c_str(), "%d:%d:%d", &a, &b, &c); return a * 3600 + b * 60 + c; }
+    throw std::runtime_error("invalid time: " + t);
+}
+
+static std::string pace_fmt(int sec) {
+    char buf[32];
+    if (sec < 3600) snprintf(buf, sizeof(buf), "%d:%02d", sec/60, sec%60);
+    else            snprintf(buf, sizeof(buf), "%d:%02d:%02d", sec/3600, (sec%3600)/60, sec%60);
+    return buf;
+}
+
+static void pace_print(double dist_m, int sec) {
+    static const double kMarathon = 42195.0;
+    static const double kMile     = 1609.34;
+    printf("GPS %s, Pace %s, Full %s, 10k %s, 5k %s, 1500m %s, 1000m %s\n",
+        pace_fmt((int)(sec * kMile / (dist_m * 1.02))).c_str(),
+        pace_fmt((int)(sec * kMile /  dist_m)).c_str(),
+        pace_fmt((int)(sec * kMarathon / dist_m)).c_str(),
+        pace_fmt((int)(sec * 10000.0 / dist_m)).c_str(),
+        pace_fmt((int)(sec *  5000.0 / dist_m)).c_str(),
+        pace_fmt((int)(sec *  1500.0 / dist_m)).c_str(),
+        pace_fmt((int)(sec *  1000.0 / dist_m)).c_str());
+}
+
+static void usage_pace(const char* prog) {
+    fprintf(stdout,
+        "Usage: %s pace <time>\n"
+        "       %s pace <distance> <time>\n"
+        "\n"
+        "Calculate equivalent paces and race times from a given result.\n"
+        "\n"
+        "Distance: full half mile pace km k5 <N>k <N>K <N>M <N>m\n"
+        "Time:     M:SS or H:MM:SS\n"
+        "\n"
+        "Output: GPS pace/mi, exact pace/mi, projected full/10k/5k/1500m/1000m\n"
+        "\n"
+        "Examples:\n"
+        "  %s pace 3:30:00           # full marathon in 3:30\n"
+        "  %s pace half 1:45:00      # half marathon in 1:45\n"
+        "  %s pace mile 6:00         # one mile in 6:00\n"
+        "  %s pace 10k 45:00         # 10K in 45:00\n",
+        prog, prog, prog, prog, prog, prog);
+}
+
+static int cmd_pace(const char* prog, int argc, char* argv[]) {
+    if (argc < 2 || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
+        usage_pace(prog); return argc < 2 ? 1 : 0;
+    }
+    try {
+        double dist_m;
+        int    sec;
+        if (argc == 2) {
+            dist_m = 42195.0;
+            sec    = pace_parse_time(argv[1]);
+        } else {
+            dist_m = pace_parse_dist(argv[1]);
+            sec    = pace_parse_time(argv[2]);
+        }
+        pace_print(dist_m, sec);
+    } catch (const std::exception& e) {
+        fprintf(stderr, "error: %s\n", e.what()); return 1;
+    }
+    return 0;
+}
+
 // ---- main ------------------------------------------------------------------
 
 int main(int argc, char* argv[]) {
@@ -305,6 +393,7 @@ int main(int argc, char* argv[]) {
     if (!strcmp(cmd, "maf"))    return cmd_maf(argv[0], argc - 1, argv + 1);
     if (!strcmp(cmd, "hanson")) return cmd_hanson(argv[0], argc - 1, argv + 1);
     if (!strcmp(cmd, "first"))  return cmd_first(argv[0], argc - 1, argv + 1);
+    if (!strcmp(cmd, "pace"))   return cmd_pace(argv[0], argc - 1, argv + 1);
 
     fprintf(stderr, "%s: unknown command '%s'\n\n", argv[0], cmd);
     usage_top(argv[0]);
