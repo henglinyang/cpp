@@ -212,6 +212,58 @@ TEST(GeneratePlan, InvalidDistanceThrows) {
     EXPECT_TRUE(threw);
 }
 
+// ---- lookup_paces: 5K time below table min (clamps to row 0) ----
+
+// sk5=959 < table min 960 → all tables clamp to row 0.
+// Corresponds to a marathon goal below ~2:35:42 (the fastest in the table).
+TEST(LookupPaces, BelowTableMinClampsTrackIntervals) {
+    auto p = first::lookup_paces(959);
+    EXPECT_EQ(p.r400,   67);
+    EXPECT_EQ(p.r600,  103);
+    EXPECT_EQ(p.r800,  138);
+    EXPECT_EQ(p.r1000, 175);
+    EXPECT_EQ(p.r1200, 214);
+    EXPECT_EQ(p.r1600, 293);
+    EXPECT_EQ(p.r2000, 371);
+}
+TEST(LookupPaces, BelowTableMinClampsTempoIntervals) {
+    auto p = first::lookup_paces(959);
+    EXPECT_EQ(p.st_mile, 326);
+    EXPECT_EQ(p.mt_mile, 341);
+    EXPECT_EQ(p.lt_mile, 356);
+}
+TEST(LookupPaces, BelowTableMinClampsLongRunPaces) {
+    auto p = first::lookup_paces(959);
+    EXPECT_EQ(p.mp_mile,  356);
+    EXPECT_EQ(p.hmp_mile, 339);
+}
+
+// ---- lookup_paces: 5K time above table max (clamps to last row) ----
+
+// sk5=2401 > table max 2400 → all tables clamp to row 144.
+// Corresponds to a marathon goal above ~6:29:15 (the slowest in the table).
+TEST(LookupPaces, AboveTableMaxClampsTrackIntervals) {
+    auto p = first::lookup_paces(2401);
+    EXPECT_EQ(p.r400,  183);
+    EXPECT_EQ(p.r600,  277);
+    EXPECT_EQ(p.r800,  370);
+    EXPECT_EQ(p.r1000, 465);
+    EXPECT_EQ(p.r1200, 561);
+    EXPECT_EQ(p.r1600, 756);
+    EXPECT_EQ(p.r2000, 951);
+}
+TEST(LookupPaces, AboveTableMaxClampsTempoIntervals) {
+    auto p = first::lookup_paces(2401);
+    EXPECT_EQ(p.st_mile, 789);
+    EXPECT_EQ(p.mt_mile, 803);
+    EXPECT_EQ(p.lt_mile, 819);
+}
+TEST(LookupPaces, AboveTableMaxClampsLongRunPaces) {
+    auto p = first::lookup_paces(2401);
+    EXPECT_EQ(p.mp_mile,  891);
+    EXPECT_EQ(p.hmp_mile, 849);
+}
+
 // ---- TCX export smoke test ----
 
 TEST(ExportTcx, ProducesOutput) {
