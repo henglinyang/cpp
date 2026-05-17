@@ -320,10 +320,13 @@ static std::vector<WeekPlan> k5_novice_schedule() {
 
     // Book week 8 (code week 5): 1mi + intervals; WO3 is just 1mi
     auto w8ab = novice_week5_interval();
-    auto w8c  = novice_dist_run(1.0f, 600, 600);
+    auto w8c = std::vector<PlanStep>{
+        novice_walk_warmup(600), novice_run_dist(1.0f),
+        novice_walk_break(300),  novice_run_dist(1.0f),
+        novice_walk_cooldown(600)};
     add(5, "walk 10min, run 1mi, walk 5min, (run 6min, walk 1min)×3, walk 10min", w8ab,
            "walk 10min, run 1mi, walk 5min, (run 6min, walk 1min)×3, walk 10min", w8ab,
-           "walk 10min, run 1mi, walk 10min", w8c);
+           "walk 10min, run 1mi, walk 5min, run 1mi, walk 10min", w8c);
 
     // Book week 9 (code week 4)
     add(4, dr(1.5f), novice_dist_run(1.5f, 600, 600),
