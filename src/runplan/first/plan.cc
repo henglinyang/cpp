@@ -447,7 +447,9 @@ static std::vector<WeekPlan> k5_intermediate_schedule(const Paces& p) {
     race.week     = 1;
     race.skip_maf = true;
     race.kr1      = r(4,400,"400m"); race.kr1_steps = with_wu_cd(ri400(4,400));
-    race.kr2      = "2 mi easy + 10 min walk"; race.kr2_steps = {easy_step(2.0f)};
+    PlanStep walk10; walk10.kind = StepKind::COOLDOWN; walk10.dist_based = false;
+    walk10.duration_val = 600; walk10.label = "walk";
+    race.kr2      = "2 mi easy + 10 min walk"; race.kr2_steps = {easy_step(2.0f), walk10};
     race.kr3      = "5K Race 3.1 mi"; race.kr3_steps = {};
     weeks.push_back(std::move(race));
 
