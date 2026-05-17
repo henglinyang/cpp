@@ -76,9 +76,13 @@ Distances and their structures:
 | `half` | 16 | HM race time | Table 5.3 |
 | `marathon` | 16 | marathon time | Table 5.5 |
 
-The `5k-novice` plan sets `skip_maf=true` on all `WeekPlan`s so no MAF warmup/cooldown is added at export — the walk steps within the workout serve that role. Walk intervals are encoded as WARMUP/RECOVER/COOLDOWN steps with open targets.
+Both `5k-novice` and `5k-intermediate` set `skip_maf=true` on all `WeekPlan`s so no MAF warmup/cooldown is added at export. In novice, walk intervals are encoded as WARMUP/RECOVER/COOLDOWN steps with open targets. In intermediate, KR1 has explicit 10-min easy-run WARMUP/COOLDOWN steps wrapping the intervals; KR2 has 1-mi easy segs at each end; KR3 has no warmup/cooldown.
 
-Options: `--distance <dist> --goal <time> --tcx <dir> --json <dir> --age <N>`
+Tempo and long-run pace steps (`run_step_pace`) use ±10 sec/mile absolute tolerance around the target pace (not a percentage). Interval repeat steps (`run_step`) use a 3% fractional tolerance.
+
+Options: `--distance <dist> --goal <time> --tcx <dir> --json <dir> --age <N> [--paces]`
+
+`--paces` prints all training pace zones (interval times, tempo paces/mi, long run paces) without showing the full schedule.
 
 Examples:
 ```bash
