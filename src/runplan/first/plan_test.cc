@@ -329,9 +329,9 @@ TEST(IntermediatePlan, WeeksDescending) {
     EXPECT_EQ(plan.weeks[0].week, 12);
     EXPECT_EQ(plan.weeks[11].week, 1);
 }
-TEST(IntermediatePlan, DoesNotSkipMaf) {
+TEST(IntermediatePlan, SkipsMaf) {
     auto plan = first::generate_plan("25:00", "5k-intermediate");
-    for (const auto& w : plan.weeks) EXPECT_FALSE(w.skip_maf);
+    for (const auto& w : plan.weeks) EXPECT_TRUE(w.skip_maf);
 }
 TEST(IntermediatePlan, KR1HasSpeedTarget) {
     auto plan = first::generate_plan("25:00", "5k-intermediate");
@@ -356,10 +356,13 @@ TEST(IntermediatePlan, RaceWeekKR3Empty) {
 TEST(IntermediatePlan, FasterGoalFasterIntervals) {
     auto slow = first::generate_plan("30:00", "5k-intermediate");
     auto fast = first::generate_plan("20:00", "5k-intermediate");
-    // First RUN step in KR1 should be faster for 20:00 goal
-    const auto& slow_s = slow.weeks[0].kr1_steps;
-    const auto& fast_s = fast.weeks[0].kr1_steps;
-    EXPECT_GT(fast_s[0].speed_high_mms, slow_s[0].speed_high_mms);
+    // Find first paced RUN step in KR1 (index 0 is now the warmup)
+    auto first_run = [](const std::vector<first::PlanStep>& steps) {
+        for (const auto& s : steps)
+            if (s.kind == first::StepKind::RUN && s.speed_high_mms > 0) return s.speed_high_mms;
+        return 0;
+    };
+    EXPECT_GT(first_run(fast.weeks[0].kr1_steps), first_run(slow.weeks[0].kr1_steps));
 }
 TEST(IntermediatePlan, ExportTcxProducesOutput) {
     first::Plan plan("25:00", "5k-intermediate");

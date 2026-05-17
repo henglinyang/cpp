@@ -361,14 +361,27 @@ static std::vector<WeekPlan> k5_intermediate_schedule(const Paces& p) {
     };
 
     std::vector<WeekPlan> weeks;
+
+    // Wrap KR1 repeats with 10-min easy run warmup/cooldown (Table 3.2 specifies these).
+    auto with_wu_cd = [](std::vector<PlanStep> steps) {
+        PlanStep wu; wu.kind = StepKind::WARMUP;   wu.dist_based = false;
+        wu.duration_val = 600; wu.label = "warmup run";
+        PlanStep cd; cd.kind = StepKind::COOLDOWN; cd.dist_based = false;
+        cd.duration_val = 600; cd.label = "cooldown run";
+        steps.insert(steps.begin(), wu);
+        steps.push_back(cd);
+        return steps;
+    };
+
     auto add = [&](int w, std::string kr1_txt, std::vector<PlanStep> kr1_s,
                    V kr2segs, float mi, PaceCode base, int off) {
         WeekPlan wp;
         wp.week      = w;
+        wp.skip_maf  = true;
         wp.kr1       = kr1_txt;
         wp.kr2       = kr2_desc(kr2segs, q);
         wp.kr3       = kr3_desc(mi, base, off, q);
-        wp.kr1_steps = kr1_s;
+        wp.kr1_steps = with_wu_cd(std::move(kr1_s));
         wp.kr2_steps = kr2_steps(kr2segs, q);
         wp.kr3_steps = kr3_steps_fn(mi, base, off, q);
         weeks.push_back(std::move(wp));
@@ -427,10 +440,11 @@ static std::vector<WeekPlan> k5_intermediate_schedule(const Paces& p) {
 
     // Race week (code week 1)
     WeekPlan race;
-    race.week = 1;
-    race.kr1  = r(4,400,"400m"); race.kr1_steps = ri400(4,400);
-    race.kr2  = "2 mi easy + 10 min walk"; race.kr2_steps = {easy_step(2.0f)};
-    race.kr3  = "5K Race 3.1 mi"; race.kr3_steps = {};
+    race.week     = 1;
+    race.skip_maf = true;
+    race.kr1      = r(4,400,"400m"); race.kr1_steps = with_wu_cd(ri400(4,400));
+    race.kr2      = "2 mi easy + 10 min walk"; race.kr2_steps = {easy_step(2.0f)};
+    race.kr3      = "5K Race 3.1 mi"; race.kr3_steps = {};
     weeks.push_back(std::move(race));
 
     return weeks;
