@@ -24,6 +24,8 @@ bazelisk test //... --test_output=all
 ./bazel-bin/src/runplan/runplan pace half 1:45:00
 ./bazel-bin/src/runplan/runplan hanson --goal 3:30:00 --json /tmp/json --age 40
 ./bazel-bin/src/runplan/runplan first --distance marathon --goal 3:15:00 --age 40
+./bazel-bin/src/runplan/runplan first --distance 5k-novice --age 35
+./bazel-bin/src/runplan/runplan first --distance 5k-intermediate --goal 25:00 --age 35
 ./bazel-bin/src/runplan/runplan maf --age 40 --test
 ```
 
@@ -61,9 +63,29 @@ Plan structure: `TrainingPlan → WeekPlan[] → DayPlan[] → PlanStep[]`. Days
 Options: `--program <beginner|advanced> --goal <H:MM:SS> --tcx <dir> --json <dir> --age <N>`
 
 #### `runplan first`
-Generates a FIRST (Furman Institute) plan for 5k/10k/half/marathon with three Key Runs (KR1/KR2/KR3) per week. `first::Plan(goal, distance)` wraps `generate_plan()`. Weeks count down (week 16 first, week 1 = race week). KR3 (long run) is exported without MAF warmup/cooldown.
+Generates a FIRST (Furman Institute) training plan. `first::Plan(goal, distance)` wraps `generate_plan()`. Weeks count down (week N first, week 1 = race week). KR3 (long run) and all novice workouts are exported without MAF warmup/cooldown.
 
-Options: `--distance <5k|10k|half|marathon> --goal <time> --tcx <dir> --json <dir> --age <N>`
+Distances and their structures:
+
+| Distance | Weeks | Goal | Source |
+|---|---|---|---|
+| `5k-novice` | 12 | none | Table 3.1 — walk/run intervals, no pace targets |
+| `5k-intermediate` | 12 | 5K race time | Table 3.2 — KR1/KR2/KR3, paces from goal |
+| `5k` | 12 | 5K race time | Table 5.1 — KR1/KR2/KR3 |
+| `10k` | 12 | 10K race time | Table 5.2 |
+| `half` | 16 | HM race time | Table 5.3 |
+| `marathon` | 16 | marathon time | Table 5.5 |
+
+The `5k-novice` plan sets `skip_maf=true` on all `WeekPlan`s so no MAF warmup/cooldown is added at export — the walk steps within the workout serve that role. Walk intervals are encoded as WARMUP/RECOVER/COOLDOWN steps with open targets.
+
+Options: `--distance <dist> --goal <time> --tcx <dir> --json <dir> --age <N>`
+
+Examples:
+```bash
+./bazel-bin/src/runplan/runplan first --distance 5k-novice --age 35
+./bazel-bin/src/runplan/runplan first --distance 5k-intermediate --goal 25:00 --age 35
+./bazel-bin/src/runplan/runplan first --distance 5k --goal 20:00 --age 35
+```
 
 #### `src/runplan/maf` — MAF library (shared)
 `maf_lib` provides `push_maf_warmup()`, `push_maf_cooldown()`, and `MafWorkout` class. Depends only on `//src/fit2tcx:workout_data` — does not pull in the FIT SDK or pugixml.
