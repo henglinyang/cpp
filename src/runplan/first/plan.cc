@@ -419,7 +419,7 @@ static std::vector<WeekPlan> k5_intermediate_schedule(const Paces& p) {
     // book week 2 (code week 11)
     add(11, r(3,400,"400m"), ri400(3,400), {{1,EASY},{1,ST},{1,EASY}}, 3, MT, 0);
     // book week 3 (code week 10)
-    add(10, r(4,400,"400m"), ri400(4,400), {{1,EASY},{1,ST},{1,EASY}}, 3, MT, 0);
+    add(10, r(4,400,"400m"), ri400(4,400), {{1,EASY},{1,ST},{1,EASY}}, 3.5f, MT, 0);
     // book week 4 (code week 9): 2×400 + 1×800
     add(9, mixed_desc({400,400,800}), mixed_steps({400,400,800}),
         {{1,EASY},{1.5f,ST},{1,EASY}}, 3.5f, MT, 0);
