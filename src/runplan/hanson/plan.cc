@@ -80,12 +80,13 @@ static const Week7 kAdvanced[18] = {
 using PS = PlanStep;
 
 static PS run_step_dist(int dist_m, int pace_sec_per_mile,
-                        double tol, const std::string& lbl) {
+                        double /*tol*/, const std::string& lbl) {
     PS s;
     s.kind = PS::Kind::RUN;
     s.dist_based = true;
     s.duration_val = dist_m;
-    pace_to_speed_range(pace_sec_per_mile, tol, s.speed_low_mms, s.speed_high_mms);
+    s.speed_low_mms  = (int)(1609.344 / (pace_sec_per_mile + 10) * 1000);
+    s.speed_high_mms = (int)(1609.344 / (pace_sec_per_mile - 10) * 1000);
     s.label = lbl;
     return s;
 }
