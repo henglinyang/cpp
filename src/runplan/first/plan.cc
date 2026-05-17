@@ -1014,9 +1014,51 @@ void print_plan(const TrainingPlan& plan) {
     printf("\n");
 }
 
+void print_paces(const TrainingPlan& plan) {
+    const Paces& p = plan.paces;
+
+    if (p.r400 == 0 && p.st_mile == 0) {
+        printf("No pace targets for this plan (novice walk/run program).\n");
+        return;
+    }
+
+    printf("%s\n\n", plan.header.c_str());
+
+    auto interval_pace = [](int dist_m, int time_sec) -> int {
+        return (int)std::round((double)time_sec * 1609.344 / dist_m);
+    };
+
+    struct IV { int dist_m; int time_sec; };
+    const IV ivs[] = {
+        {400, p.r400}, {600, p.r600}, {800, p.r800}, {1000, p.r1000},
+        {1200, p.r1200}, {1600, p.r1600}, {2000, p.r2000}
+    };
+
+    printf("Key Run #1 — Track Intervals\n");
+    for (const auto& iv : ivs) {
+        if (iv.time_sec == 0) continue;
+        printf("  %4dm:  %s  (%s)\n", iv.dist_m,
+               fmt_time(iv.time_sec).c_str(),
+               fmt_pace(interval_pace(iv.dist_m, iv.time_sec)).c_str());
+    }
+
+    printf("\nKey Run #2 — Tempo Paces\n");
+    printf("  Short tempo (ST):  %s\n", fmt_pace(p.st_mile).c_str());
+    printf("  Mid tempo   (MT):  %s\n", fmt_pace(p.mt_mile).c_str());
+    printf("  Long tempo  (LT):  %s\n", fmt_pace(p.lt_mile).c_str());
+
+    if (p.goal_mp_mile > 0 || p.goal_hmp_mile > 0) {
+        printf("\nKey Run #3 — Long Run Paces\n");
+        if (p.goal_mp_mile  > 0) printf("  Marathon pace       (MP):   %s\n", fmt_pace(p.goal_mp_mile).c_str());
+        if (p.goal_hmp_mile > 0) printf("  Half-marathon pace  (HMP):  %s\n", fmt_pace(p.goal_hmp_mile).c_str());
+    }
+    printf("\n");
+}
+
 Plan::Plan(const std::string& goal, const std::string& distance)
     : plan_(generate_plan(goal, distance)) {}
 
-void Plan::print() const { print_plan(plan_); }
+void Plan::print()      const { print_plan(plan_); }
+void Plan::printPaces() const { print_paces(plan_); }
 
 } // namespace first

@@ -236,6 +236,7 @@ static void usage_first(const char* prog) {
         "  --distance <5k|5k-novice|5k-intermediate|10k|half|marathon|full>\n"
         "                                       (default: marathon)\n"
         "  --goal <H:MM:SS or M:SS>             Goal finish time (not needed for 5k-novice)\n"
+        "  --paces                              Print all training pace zones and exit\n"
         "  --tcx <dir>                          Export workouts as TCX files\n"
         "  --json <dir>                         Export workouts as Garmin JSON files\n"
         "  --age <N>                            Athlete age for MAF HR (default: 50)\n"
@@ -244,11 +245,10 @@ static void usage_first(const char* prog) {
         "Examples:\n"
         "  %s first --distance marathon --goal 3:15:00\n"
         "  %s first --distance half --goal 1:35:00 --json ./json --age 40\n"
-        "  %s first --distance 10k --goal 45:00\n"
-        "  %s first --distance 5k --goal 20:00\n"
+        "  %s first --distance 5k --goal 20:00 --paces\n"
         "  %s first --distance 5k-novice --age 35\n"
-        "  %s first --distance 5k-intermediate --goal 25:00 --age 35\n",
-        prog, prog, prog, prog, prog, prog, prog);
+        "  %s first --distance 5k-intermediate --goal 25:00 --paces\n",
+        prog, prog, prog, prog, prog);
 }
 
 static int cmd_first(const char* prog, int argc, char* argv[]) {
@@ -256,7 +256,8 @@ static int cmd_first(const char* prog, int argc, char* argv[]) {
     std::string goal     = "3:15:00";
     std::string tcx_dir;
     std::string json_dir;
-    int age = 50;
+    int  age        = 50;
+    bool show_paces = false;
 
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-h") || !strcmp(argv[i], "--help")) {
@@ -265,6 +266,8 @@ static int cmd_first(const char* prog, int argc, char* argv[]) {
             distance = argv[++i];
         } else if (!strcmp(argv[i], "--goal") && i+1 < argc) {
             goal = argv[++i];
+        } else if (!strcmp(argv[i], "--paces")) {
+            show_paces = true;
         } else if (!strcmp(argv[i], "--tcx") && i+1 < argc) {
             tcx_dir = argv[++i];
         } else if (!strcmp(argv[i], "--json") && i+1 < argc) {
@@ -286,6 +289,10 @@ static int cmd_first(const char* prog, int argc, char* argv[]) {
 
     try {
         first::Plan plan(goal, distance);
+        if (show_paces) {
+            plan.printPaces();
+            return 0;
+        }
         plan.print();
         if (!tcx_dir.empty()) { mkdir(tcx_dir.c_str(), 0755); plan.exportTcx(tcx_dir, age); }
         if (!json_dir.empty()) { mkdir(json_dir.c_str(), 0755); plan.exportJson(json_dir, age); }
