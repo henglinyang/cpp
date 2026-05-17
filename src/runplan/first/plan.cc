@@ -195,6 +195,247 @@ static std::vector<PlanStep> kr3_steps_fn(float miles, PaceCode base,
     return {run_step_pace(miles, pace, lbl)};
 }
 
+// ---- 5K Novice schedule (Table 3.1) ----
+// Walk/run program: no pace targets, walking warmup/cooldown embedded in steps.
+
+static PlanStep novice_walk_warmup(int sec) {
+    PlanStep s; s.kind = StepKind::WARMUP; s.dist_based = false;
+    s.duration_val = sec; s.label = "walk"; return s;
+}
+static PlanStep novice_walk_cooldown(int sec) {
+    PlanStep s; s.kind = StepKind::COOLDOWN; s.dist_based = false;
+    s.duration_val = sec; s.label = "walk"; return s;
+}
+static PlanStep novice_run_time(int sec) {
+    PlanStep s; s.kind = StepKind::RUN; s.dist_based = false;
+    s.duration_val = sec; s.label = "run"; return s;
+}
+static PlanStep novice_run_dist(float miles) {
+    PlanStep s; s.kind = StepKind::RUN; s.dist_based = true;
+    s.duration_val = (int)(miles * 1609.344); s.label = "run"; return s;
+}
+static PlanStep novice_walk_break(int sec) {
+    PlanStep s; s.kind = StepKind::RECOVER; s.dist_based = false;
+    s.duration_val = sec; s.label = "walk"; return s;
+}
+
+// Build (run_sec + walk_sec) × n with surrounding 10-min walk warmup/cooldown.
+static std::vector<PlanStep> novice_interval(int run_sec, int walk_sec, int n,
+                                              int wu_sec = 600, int cd_sec = 600) {
+    std::vector<PlanStep> s;
+    s.push_back(novice_walk_warmup(wu_sec));
+    for (int i = 0; i < n; i++) {
+        s.push_back(novice_run_time(run_sec));
+        if (i < n - 1) s.push_back(novice_walk_break(walk_sec));
+    }
+    s.push_back(novice_walk_cooldown(cd_sec));
+    return s;
+}
+
+// Build distance run with walk warmup/cooldown.
+static std::vector<PlanStep> novice_dist_run(float miles, int wu_sec = 600, int cd_sec = 600) {
+    return { novice_walk_warmup(wu_sec), novice_run_dist(miles), novice_walk_cooldown(cd_sec) };
+}
+
+// Week 5 (book week 8): W:10min, R:1mi, W:5min, (R:6min, W:1min)×3, W:10min
+static std::vector<PlanStep> novice_week5_interval() {
+    std::vector<PlanStep> s;
+    s.push_back(novice_walk_warmup(600));
+    s.push_back(novice_run_dist(1.0f));
+    s.push_back(novice_walk_break(300));
+    for (int i = 0; i < 3; i++) {
+        s.push_back(novice_run_time(360));
+        if (i < 2) s.push_back(novice_walk_break(60));
+    }
+    s.push_back(novice_walk_cooldown(600));
+    return s;
+}
+
+static std::string novice_interval_desc(int run_sec, int walk_sec, int n) {
+    char buf[128];
+    snprintf(buf, sizeof(buf), "walk 10min, (run %dmin, walk %dmin)×%d, walk 10min",
+             run_sec/60, walk_sec/60, n);
+    return buf;
+}
+static std::string novice_dist_desc(float miles) {
+    char buf[64];
+    snprintf(buf, sizeof(buf), "walk 10min, run %.4g mi, walk 10min", (double)miles);
+    return buf;
+}
+
+static std::vector<WeekPlan> k5_novice_schedule() {
+    std::vector<WeekPlan> weeks;
+
+    auto add = [&](int w, std::string d1, std::vector<PlanStep> s1,
+                           std::string d2, std::vector<PlanStep> s2,
+                           std::string d3, std::vector<PlanStep> s3) {
+        WeekPlan wp;
+        wp.week = w; wp.skip_maf = true;
+        wp.kr1 = d1; wp.kr1_steps = std::move(s1);
+        wp.kr2 = d2; wp.kr2_steps = std::move(s2);
+        wp.kr3 = d3; wp.kr3_steps = std::move(s3);
+        weeks.push_back(std::move(wp));
+    };
+
+    auto iv = novice_interval_desc;
+    auto dr = novice_dist_desc;
+
+    // Book week 1 (code week 12): all 3 workouts identical
+    auto w1 = novice_interval(60, 120, 4);
+    add(12, iv(60,120,4), w1, iv(60,120,4), w1, iv(60,120,4), w1);
+
+    // Book week 2 (code week 11)
+    auto w2 = novice_interval(120, 120, 3);
+    add(11, iv(120,120,3), w2, iv(120,120,3), w2, iv(120,120,3), w2);
+
+    // Book week 3 (code week 10): WO1/WO2 differ from WO3
+    auto w3a = novice_interval(120, 60, 4);
+    auto w3b = novice_interval(180, 120, 3);
+    add(10, iv(120,60,4), w3a, iv(120,60,4), w3a,
+            "walk 10min, (run 3min, walk 2min)×3, walk 10min", w3b);
+
+    // Book week 4 (code week 9): WO3 has 5 reps
+    auto w4a = novice_interval(180, 60, 4);
+    auto w4b = novice_interval(180, 60, 5);
+    add(9, iv(180,60,4), w4a, iv(180,60,4), w4a,
+           "walk 10min, (run 3min, walk 1min)×5, walk 10min", w4b);
+
+    // Book week 5 (code week 8): WO3 has 5 reps of (4min run, 1min walk)
+    auto w5a = novice_interval(240, 120, 4);
+    auto w5b = novice_interval(240, 60, 5);
+    add(8, iv(240,120,4), w5a, iv(240,120,4), w5a,
+           "walk 10min, (run 4min, walk 1min)×5, walk 10min", w5b);
+
+    // Book week 6 (code week 7): 6 reps; WO3 is (5min run, 1min walk)×5
+    auto w6a = novice_interval(240, 60, 6);
+    auto w6b = novice_interval(300, 60, 5);
+    add(7, iv(240,60,6), w6a, iv(240,60,6), w6a,
+           "walk 10min, (run 5min, walk 1min)×5, walk 10min", w6b);
+
+    // Book week 7 (code week 6): 6 reps (5min); WO3 is (6min, 1min)×5
+    auto w7a = novice_interval(300, 60, 6);
+    auto w7b = novice_interval(360, 60, 5);
+    add(6, iv(300,60,6), w7a, iv(300,60,6), w7a,
+           "walk 10min, (run 6min, walk 1min)×5, walk 10min", w7b);
+
+    // Book week 8 (code week 5): 1mi + intervals; WO3 is just 1mi
+    auto w8ab = novice_week5_interval();
+    auto w8c  = novice_dist_run(1.0f, 600, 600);
+    add(5, "walk 10min, run 1mi, walk 5min, (run 6min, walk 1min)×3, walk 10min", w8ab,
+           "walk 10min, run 1mi, walk 5min, (run 6min, walk 1min)×3, walk 10min", w8ab,
+           "walk 10min, run 1mi, walk 10min", w8c);
+
+    // Book week 9 (code week 4)
+    add(4, dr(1.5f), novice_dist_run(1.5f, 600, 600),
+           "walk 10min, run 1.5mi, walk 5min", {novice_walk_warmup(600), novice_run_dist(1.5f), novice_walk_cooldown(300)},
+           dr(2.0f), {novice_walk_warmup(600), novice_run_dist(2.0f), novice_walk_cooldown(300)});
+
+    // Book week 10 (code week 3)
+    auto w10ab = std::vector<PlanStep>{novice_walk_warmup(600), novice_run_dist(2.0f), novice_walk_cooldown(300)};
+    auto w10c  = std::vector<PlanStep>{novice_walk_warmup(600), novice_run_dist(2.5f), novice_walk_cooldown(300)};
+    add(3, dr(2.0f), w10ab, dr(2.0f), w10ab, dr(2.5f), w10c);
+
+    // Book week 11 (code week 2)
+    auto w11ab = std::vector<PlanStep>{novice_walk_warmup(600), novice_run_dist(2.0f), novice_walk_cooldown(600)};
+    auto w11c  = std::vector<PlanStep>{novice_walk_warmup(600), novice_run_dist(3.0f), novice_walk_cooldown(300)};
+    add(2, dr(2.0f), w11ab, dr(2.0f), w11ab, dr(3.0f), w11c);
+
+    // Book week 12 = race week (code week 1)
+    auto w12ab = std::vector<PlanStep>{novice_walk_warmup(600), novice_run_dist(2.0f), novice_walk_cooldown(600)};
+    auto w12c  = std::vector<PlanStep>{novice_walk_warmup(600), novice_run_dist(3.1f), novice_walk_cooldown(300)};
+    add(1, dr(2.0f), w12ab, dr(2.0f), w12ab,
+           "walk 10min, 5K Race 3.1mi, walk 5min", w12c);
+
+    return weeks;
+}
+
+// ---- 5K Intermediate schedule (Table 3.2) ----
+// Uses FIRST key run structure (track repeats / tempo / long), paces from 5K goal time.
+
+static std::vector<WeekPlan> k5_intermediate_schedule(const Paces& p) {
+    using V = std::vector<Seg>;
+    const Paces& q = p;
+
+    auto r = [&](int n, int d, const std::string& ri) {
+        return rep_str(n, d, rep_time(q, d), ri);
+    };
+
+    std::vector<WeekPlan> weeks;
+    auto add = [&](int w, std::string kr1_txt, std::vector<PlanStep> kr1_s,
+                   V kr2segs, float mi, PaceCode base, int off) {
+        WeekPlan wp;
+        wp.week      = w;
+        wp.kr1       = kr1_txt;
+        wp.kr2       = kr2_desc(kr2segs, q);
+        wp.kr3       = kr3_desc(mi, base, off, q);
+        wp.kr1_steps = kr1_s;
+        wp.kr2_steps = kr2_steps(kr2segs, q);
+        wp.kr3_steps = kr3_steps_fn(mi, base, off, q);
+        weeks.push_back(std::move(wp));
+    };
+
+    auto ri400 = [&](int n, int d) { return repeat_steps(n, d, rep_time(q, d), true, 400); };
+
+    // Mixed interval helpers (ascending ladder with 400m RI between each)
+    auto mixed_steps = [&](std::vector<int> dists) {
+        std::vector<PlanStep> s;
+        for (size_t i = 0; i < dists.size(); i++) {
+            int d = dists[i]; char lbl[32]; snprintf(lbl, sizeof(lbl), "%dm", d);
+            int t = rep_time(q, d);
+            if (t == 0) t = (d <= 200) ? q.r400/2 : 0;  // estimate 200m
+            s.push_back(run_step(d, t > 0 ? t : 1, lbl));
+            if (i < dists.size() - 1) s.push_back(recover_dist(400));
+        }
+        return s;
+    };
+    auto mixed_desc = [&](std::vector<int> dists) {
+        std::string txt;
+        for (size_t i = 0; i < dists.size(); i++) {
+            if (i) txt += '-';
+            txt += std::to_string(dists[i]);
+        }
+        txt += " (400m RI)";
+        return txt;
+    };
+
+    // book week 1 (code week 12)
+    add(12, r(2,400,"400m"), ri400(2,400), {{1,EASY},{1,ST},{1,EASY}}, 3, MT, 0);
+    // book week 2 (code week 11)
+    add(11, r(3,400,"400m"), ri400(3,400), {{1,EASY},{1,ST},{1,EASY}}, 3, MT, 0);
+    // book week 3 (code week 10)
+    add(10, r(4,400,"400m"), ri400(4,400), {{1,EASY},{1,ST},{1,EASY}}, 3, MT, 0);
+    // book week 4 (code week 9): 2×400 + 1×800
+    add(9, mixed_desc({400,400,800}), mixed_steps({400,400,800}),
+        {{1,EASY},{1.5f,ST},{1,EASY}}, 3.5f, MT, 0);
+    // book week 5 (code week 8): 400-600-800
+    add(8, mixed_desc({400,600,800}), mixed_steps({400,600,800}),
+        {{1,EASY},{1.5f,ST},{1,EASY}}, 4, MT, 0);
+    // book week 6 (code week 7)
+    add(7, r(5,400,"400m"), ri400(5,400), {{1,EASY},{1.5f,ST},{1,EASY}}, 4, MT, 0);
+    // book week 7 (code week 6): 400 + 2×800
+    add(6, mixed_desc({400,800,800}), mixed_steps({400,800,800}),
+        {{1,EASY},{1.5f,ST},{1,EASY}}, 4.5f, MT, 0);
+    // book week 8 (code week 5): 2×1000
+    add(5, r(2,1000,"400m"), ri400(2,1000), {{1,EASY},{2,ST},{1,EASY}}, 4.5f, MT, 0);
+    // book week 9 (code week 4)
+    add(4, r(6,400,"400m"), ri400(6,400), {{1,EASY},{2,ST},{1,EASY}}, 5, LT, 0);
+    // book week 10 (code week 3)
+    add(3, r(3,800,"400m"), ri400(3,800), {{1,EASY},{2,ST},{1,EASY}}, 5, LT, 0);
+    // book week 11 (code week 2): 200-400-600-800
+    add(2, mixed_desc({200,400,600,800}), mixed_steps({200,400,600,800}),
+        {{1,EASY},{2,ST},{1,EASY}}, 5, LT, 0);
+
+    // Race week (code week 1)
+    WeekPlan race;
+    race.week = 1;
+    race.kr1  = r(4,400,"400m"); race.kr1_steps = ri400(4,400);
+    race.kr2  = "2 mi easy + 10 min walk"; race.kr2_steps = {easy_step(2.0f)};
+    race.kr3  = "5K Race 3.1 mi"; race.kr3_steps = {};
+    weeks.push_back(std::move(race));
+
+    return weeks;
+}
+
 // ---- Marathon schedule (Table 5.5) ----
 
 static std::vector<WeekPlan> marathon_schedule(const Paces& p) {
@@ -657,9 +898,34 @@ static std::vector<WeekPlan> k5_schedule(const Paces& p) {
 // ---- Public API ----
 
 TrainingPlan generate_plan(const std::string& goal, const std::string& distance) {
+    if (distance == "5k-novice") {
+        TrainingPlan plan;
+        plan.header   = "FIRST 5K Novice Training Program (Table 3.1) — 12 Weeks";
+        plan.distance = "5k-novice";
+        plan.paces    = Paces{};
+        plan.weeks    = k5_novice_schedule();
+        return plan;
+    }
+
     int goal_sec = parse_time(goal);
     if (goal_sec <= 0)
         throw std::runtime_error("invalid goal time: " + goal);
+
+    if (distance == "5k-intermediate") {
+        Paces p = lookup_paces(goal_sec);
+        p.goal_mp_mile  = p.mp_mile;
+        p.goal_hmp_mile = p.hmp_mile;
+        char hdr[256];
+        snprintf(hdr, sizeof(hdr),
+                 "FIRST 5K Intermediate Training Program (Table 3.2) — 12 Weeks\n"
+                 "Goal 5K: %s", fmt_time(goal_sec).c_str());
+        TrainingPlan plan;
+        plan.header   = hdr;
+        plan.distance = "5k-intermediate";
+        plan.paces    = p;
+        plan.weeks    = k5_intermediate_schedule(p);
+        return plan;
+    }
 
     int sk5 = goal_to_5k(goal_sec, distance);
     Paces p = lookup_paces(sk5);
@@ -676,9 +942,9 @@ TrainingPlan generate_plan(const std::string& goal, const std::string& distance)
     }
 
     char hdr[256];
-    const char* dist_label = distance == "5k" ? "5K" :
-                             distance == "10k" ? "10K" :
-                             distance == "half" ? "Half-Marathon" : "Marathon";
+    const char* dist_label = distance == "5k"   ? "5K" :
+                             distance == "10k"   ? "10K" :
+                             distance == "half"  ? "Half-Marathon" : "Marathon";
     int weeks_count = (distance == "5k" || distance == "10k") ? 12 : 16;
     snprintf(hdr, sizeof(hdr),
              "FIRST Run Less Run Faster\n%d-Week %s Training Plan\n"

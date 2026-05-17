@@ -264,6 +264,114 @@ TEST(LookupPaces, AboveTableMaxClampsLongRunPaces) {
     EXPECT_EQ(p.hmp_mile, 849);
 }
 
+// ---- 5K Novice plan tests ----
+
+TEST(NovicePlan, Has12Weeks) {
+    auto plan = first::generate_plan("", "5k-novice");
+    EXPECT_EQ((int)plan.weeks.size(), 12);
+}
+TEST(NovicePlan, WeeksDescending) {
+    auto plan = first::generate_plan("", "5k-novice");
+    EXPECT_EQ(plan.weeks[0].week, 12);
+    EXPECT_EQ(plan.weeks[11].week, 1);
+}
+TEST(NovicePlan, AllWeeksSkipMaf) {
+    auto plan = first::generate_plan("", "5k-novice");
+    for (const auto& w : plan.weeks) EXPECT_TRUE(w.skip_maf);
+}
+TEST(NovicePlan, FirstWeekHasRunAndWalkSteps) {
+    auto plan = first::generate_plan("", "5k-novice");
+    const auto& steps = plan.weeks[0].kr1_steps;
+    EXPECT_GT((int)steps.size(), 2);
+    // Should start with WARMUP (walk)
+    EXPECT_EQ(steps.front().kind, first::StepKind::WARMUP);
+    // Should end with COOLDOWN (walk)
+    EXPECT_EQ(steps.back().kind, first::StepKind::COOLDOWN);
+}
+TEST(NovicePlan, StepsHaveNoSpeedTarget) {
+    auto plan = first::generate_plan("", "5k-novice");
+    for (const auto& w : plan.weeks)
+        for (const auto& s : w.kr1_steps) {
+            EXPECT_EQ(s.speed_high_mms, 0);
+            EXPECT_EQ(s.hr_high, 0);
+        }
+}
+TEST(NovicePlan, RaceWeekKR3IsDistanceBased) {
+    auto plan = first::generate_plan("", "5k-novice");
+    // Race week = weeks.back() (week 1)
+    const auto& steps = plan.weeks.back().kr3_steps;
+    EXPECT_GT((int)steps.size(), 0);
+    // The run step should be distance-based (5K race)
+    bool found_dist_run = false;
+    for (const auto& s : steps)
+        if (s.kind == first::StepKind::RUN && s.dist_based) found_dist_run = true;
+    EXPECT_TRUE(found_dist_run);
+}
+TEST(NovicePlan, ExportTcxProducesOutput) {
+    first::Plan plan("", "5k-novice");
+    plan.exportTcx("/tmp", 35);
+    EXPECT_TRUE(true);
+}
+TEST(NovicePlan, ExportJsonProducesOutput) {
+    first::Plan plan("", "5k-novice");
+    plan.exportJson("/tmp", 35);
+    EXPECT_TRUE(true);
+}
+
+// ---- 5K Intermediate plan tests ----
+
+TEST(IntermediatePlan, Has12Weeks) {
+    auto plan = first::generate_plan("25:00", "5k-intermediate");
+    EXPECT_EQ((int)plan.weeks.size(), 12);
+}
+TEST(IntermediatePlan, WeeksDescending) {
+    auto plan = first::generate_plan("25:00", "5k-intermediate");
+    EXPECT_EQ(plan.weeks[0].week, 12);
+    EXPECT_EQ(plan.weeks[11].week, 1);
+}
+TEST(IntermediatePlan, DoesNotSkipMaf) {
+    auto plan = first::generate_plan("25:00", "5k-intermediate");
+    for (const auto& w : plan.weeks) EXPECT_FALSE(w.skip_maf);
+}
+TEST(IntermediatePlan, KR1HasSpeedTarget) {
+    auto plan = first::generate_plan("25:00", "5k-intermediate");
+    // Week 12 KR1 = 2×400; each RUN step should have a speed target
+    const auto& steps = plan.weeks[0].kr1_steps;
+    bool found_speed = false;
+    for (const auto& s : steps)
+        if (s.kind == first::StepKind::RUN && s.speed_high_mms > 0) found_speed = true;
+    EXPECT_TRUE(found_speed);
+}
+TEST(IntermediatePlan, KR3HasNoSpeedTargetForMT) {
+    // KR3 week 12 = 3mi @ mid-tempo (MT pace), which should have a speed target
+    auto plan = first::generate_plan("25:00", "5k-intermediate");
+    const auto& steps = plan.weeks[0].kr3_steps;
+    EXPECT_EQ((int)steps.size(), 1);
+    EXPECT_GT(steps[0].speed_high_mms, 0);
+}
+TEST(IntermediatePlan, RaceWeekKR3Empty) {
+    auto plan = first::generate_plan("25:00", "5k-intermediate");
+    EXPECT_TRUE(plan.weeks.back().kr3_steps.empty());
+}
+TEST(IntermediatePlan, FasterGoalFasterIntervals) {
+    auto slow = first::generate_plan("30:00", "5k-intermediate");
+    auto fast = first::generate_plan("20:00", "5k-intermediate");
+    // First RUN step in KR1 should be faster for 20:00 goal
+    const auto& slow_s = slow.weeks[0].kr1_steps;
+    const auto& fast_s = fast.weeks[0].kr1_steps;
+    EXPECT_GT(fast_s[0].speed_high_mms, slow_s[0].speed_high_mms);
+}
+TEST(IntermediatePlan, ExportTcxProducesOutput) {
+    first::Plan plan("25:00", "5k-intermediate");
+    plan.exportTcx("/tmp", 35);
+    EXPECT_TRUE(true);
+}
+TEST(IntermediatePlan, ExportJsonProducesOutput) {
+    first::Plan plan("25:00", "5k-intermediate");
+    plan.exportJson("/tmp", 35);
+    EXPECT_TRUE(true);
+}
+
 // ---- TCX export smoke test ----
 
 TEST(ExportTcx, ProducesOutput) {

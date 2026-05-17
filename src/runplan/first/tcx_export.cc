@@ -120,7 +120,8 @@ static void for_each_kr(const TrainingPlan& plan, int age,
             if (kr.steps->empty()) continue;
             std::string name = "first-" + plan.distance + "-w" + std::to_string(week.week)
                              + "-" + kr.tag;
-            fn(build_workout(*kr.steps, name, maf_hr, kr.tag == std::string("kr3")), week.week, kr.tag);
+            bool is_long = (kr.tag == std::string("kr3")) || week.skip_maf;
+            fn(build_workout(*kr.steps, name, maf_hr, is_long), week.week, kr.tag);
         }
     }
 }

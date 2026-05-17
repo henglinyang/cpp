@@ -233,8 +233,9 @@ static void usage_first(const char* prog) {
         "Generate a FIRST (Furman Institute) training plan.\n"
         "\n"
         "Options:\n"
-        "  --distance <5k|10k|half|marathon|full>   (default: marathon)\n"
-        "  --goal <H:MM:SS or M:SS>             Goal finish time (default: 3:15:00)\n"
+        "  --distance <5k|5k-novice|5k-intermediate|10k|half|marathon|full>\n"
+        "                                       (default: marathon)\n"
+        "  --goal <H:MM:SS or M:SS>             Goal finish time (not needed for 5k-novice)\n"
         "  --tcx <dir>                          Export workouts as TCX files\n"
         "  --json <dir>                         Export workouts as Garmin JSON files\n"
         "  --age <N>                            Athlete age for MAF HR (default: 50)\n"
@@ -244,8 +245,10 @@ static void usage_first(const char* prog) {
         "  %s first --distance marathon --goal 3:15:00\n"
         "  %s first --distance half --goal 1:35:00 --json ./json --age 40\n"
         "  %s first --distance 10k --goal 45:00\n"
-        "  %s first --distance 5k --goal 20:00\n",
-        prog, prog, prog, prog, prog);
+        "  %s first --distance 5k --goal 20:00\n"
+        "  %s first --distance 5k-novice --age 35\n"
+        "  %s first --distance 5k-intermediate --goal 25:00 --age 35\n",
+        prog, prog, prog, prog, prog, prog, prog);
 }
 
 static int cmd_first(const char* prog, int argc, char* argv[]) {
@@ -275,10 +278,9 @@ static int cmd_first(const char* prog, int argc, char* argv[]) {
     }
 
     if (distance == "full") distance = "marathon";
-    if (distance != "5k" && distance != "10k" &&
-        distance != "half" && distance != "marathon") {
-        fprintf(stderr, "invalid distance: %s (must be 5k, 10k, half, marathon, full)\n",
-                distance.c_str());
+    if (distance != "5k" && distance != "5k-novice" && distance != "5k-intermediate" &&
+        distance != "10k" && distance != "half" && distance != "marathon") {
+        fprintf(stderr, "invalid distance: %s\n", distance.c_str());
         return 1;
     }
 

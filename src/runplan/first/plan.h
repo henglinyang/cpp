@@ -33,6 +33,7 @@ struct PlanStep {
 
 struct WeekPlan {
     int week;          // 1 = race week
+    bool skip_maf = false;  // if true, no MAF warmup/cooldown added at export
     std::string kr1;   // Key Run #1 text description
     std::string kr2;   // Key Run #2 text description
     std::string kr3;   // Key Run #3 text description
