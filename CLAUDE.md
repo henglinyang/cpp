@@ -58,7 +58,7 @@ Generates a MAF workout: 15-min warmup + run steps + 10-min cooldown. Entry poin
 #### `runplan hanson`
 Generates an 18-week Hansons marathon plan (beginner or advanced). SOS workouts have structured `PlanStep` arrays exported via `tcx_export.cc`. `hanson::Plan(goal, Program)` wraps `generate_plan()` and provides `exportTcx/Json(dir, age)`.
 
-Plan structure: `TrainingPlan → WeekPlan[] → DayPlan[] → PlanStep[]`. Days 0–6 = Mon–Sun. Steps have `kind` (RUN/RECOVER/WARMUP/COOLDOWN), `duration_val` (meters or seconds), `dist_based` flag, `speed_low_mms`/`speed_high_mms` (mm/s). Long runs (`DayKind::LONG`) are exported without MAF warmup/cooldown.
+Plan structure: `TrainingPlan → WeekPlan[] → DayPlan[] → PlanStep[]`. Days 0–6 = Mon–Sun. Steps have `kind` (RUN/RECOVER/WARMUP/COOLDOWN), `duration_val` (meters or seconds), `dist_based` flag, `speed_low_mms`/`speed_high_mms` (mm/s). Long runs (`DayKind::LONG`) are exported without MAF warmup/cooldown. Tempo pace steps use ±10 sec/mile absolute tolerance (`run_step_dist` in `hanson/plan.cc`).
 
 Options: `--program <beginner|advanced> --goal <H:MM:SS> --tcx <dir> --json <dir> --age <N>`
 
