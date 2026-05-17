@@ -109,8 +109,8 @@ static PlanStep run_step_pace(float miles, int pace_sec_per_mile, const std::str
     s.kind = StepKind::RUN;
     s.dist_based = true;
     s.duration_val = (int)(miles * 1609.344);
-    s.speed_low_mms  = (int)(1609.344 / (pace_sec_per_mile + 20) * 1000);
-    s.speed_high_mms = (int)(1609.344 / (pace_sec_per_mile - 20) * 1000);
+    s.speed_low_mms  = (int)(1609.344 / (pace_sec_per_mile + 10) * 1000);
+    s.speed_high_mms = (int)(1609.344 / (pace_sec_per_mile - 10) * 1000);
     s.label = lbl;
     return s;
 }
